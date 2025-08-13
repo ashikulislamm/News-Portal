@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { UserIcon, Cog6ToothIcon, FolderIcon, ArrowPathIcon, ArrowRightOnRectangleIcon, Bars3Icon } from "@heroicons/react/24/outline";
-import UserAvatar from "../assets/Logo.png"; // Update with your avatar image
-
+import {
+  UserIcon,
+  Cog6ToothIcon,
+  FolderIcon,
+  ArrowPathIcon,
+  ArrowRightOnRectangleIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline";
+import UserAvatar from "../assets/Logo.png";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const menuItems = [
   {
@@ -35,24 +43,137 @@ const menuItems = [
 export const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState("userInfo");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Remove token or any user data from localStorage
+    localStorage.removeItem("token");
+    // Optionally clear other user info
+    localStorage.removeItem("user");
+
+    // Redirect to login page
+    navigate("/login");
+  };
 
   const avatar = UserAvatar;
   const username = "John Doe";
 
   const [user, setUser] = useState({
-    fullName: "John Doe",
-    email: "john@example.com",
-    phone: "+1234567890",
-    country: "United States of America",
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    country: "",
     profileImage: avatar, // default image
   });
 
+  // Fetch user info after component mounts
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/auth/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        console.log("Fetched user:", response.data);
+
+        setUser({
+          fullName: response.data.fullName,
+          email: response.data.email,
+          phone: response.data.phone,
+          address: response.data.address,
+          country: response.data.country,
+        });
+      } catch (err) {
+        // Only logout if token is invalid or expired
+        if (err.response?.status === 401) {
+          console.warn("Token invalid or expired, logging out");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        } else {
+          // For other errors, just log
+          console.error(
+            "Failed to fetch user info:",
+            err.response?.data || err
+          );
+        }
+      }
+    };
+
+    fetchUser();
+  }, []);
+  // Update User Info
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.put(
+        "http://localhost:5000/api/auth/profile",
+        {
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          country: user.country,
+          address: user.address,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("Profile updated:", response.data);
+
+      // Update local state with the returned user
+      setUser(response.data.user);
+
+      // Optional: show success alert
+      setAlert({ message: response.data.message, type: "success" });
+    } catch (err) {
+      console.error("Failed to update profile:", err.response?.data || err);
+      setAlert({
+        message: err.response?.data?.message || "Update failed",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [posts, setPosts] = useState([
-    { id: 1, title: "News 1", excerpt: "This is an example of a news article." },
-    { id: 2, title: "News 2", excerpt: "This is another example of a news article." },
+    {
+      id: 1,
+      title: "News 1",
+      excerpt: "This is an example of a news article.",
+    },
+    {
+      id: 2,
+      title: "News 2",
+      excerpt: "This is another example of a news article.",
+    },
   ]);
 
-  const [newPost, setNewPost] = useState({ title: "", content: "", image: null });
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    image: null,
+  });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -65,9 +186,12 @@ export const UserDashboard = () => {
     postData.append("title", newPost.title);
     postData.append("content", newPost.content);
     postData.append("image", newPost.image);
-    
+
     // Simulate adding a new post
-    setPosts([...posts, { id: posts.length + 1, title: newPost.title, excerpt: newPost.content }]);
+    setPosts([
+      ...posts,
+      { id: posts.length + 1, title: newPost.title, excerpt: newPost.content },
+    ]);
     setNewPost({ title: "", content: "", image: null });
   };
 
@@ -87,23 +211,42 @@ export const UserDashboard = () => {
         transition={{ duration: 0.3 }}
         className="bg-white p-6 rounded-2xl shadow-xl"
       >
-        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 text-left">
           <img
-            src={user.profileImage}
+            src={user.profileImage || avatar} // fallback to default avatar
             alt="User Avatar"
-            className="w-40 h-40 rounded-full border-4 border-[#a9b5df] shadow-lg object-cover"
+            className="w-20 h-20 rounded-full border-4 border-[#a9b5df] shadow-lg object-cover"
           />
           <div className="flex-1 space-y-2">
-            <h2 className="text-3xl font-bold text-[#2d336b]">User Information</h2>
-            <p className="text-[#ec4d4d] font-medium">{username}</p>
+            <p className="text-[#ec4d4d] text-3xl font-medium">
+              {user.fullName || "User"} {/* display actual full name */}
+            </p>
             <p className="text-gray-600 leading-relaxed">
-              I build secure and decentralized solutions for protecting intellectual property. My mission is to empower creators through robust blockchain verification and seamless licensing processes.
+              I build secure and decentralized solutions for protecting
+              intellectual property. My mission is to empower creators through
+              robust blockchain verification and seamless licensing processes.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 mt-6 gap-y-4 text-sm text-[#2d336b]">
-              <div><span className="font-semibold">Full Name:</span> {user.fullName}</div>
-              <div><span className="font-semibold">Email:</span> {user.email}</div>
-              <div><span className="font-semibold">Phone:</span> {user.phone}</div>
-              <div><span className="font-semibold">Country:</span> {user.country}</div>
+              <div>
+                <span className="font-semibold">Full Name:</span>{" "}
+                {user.fullName || "-"}
+              </div>
+              <div>
+                <span className="font-semibold">Email:</span>{" "}
+                {user.email || "-"}
+              </div>
+              <div>
+                <span className="font-semibold">Phone:</span>{" "}
+                {user.phone || "-"}
+              </div>
+              <div>
+                <span className="font-semibold">Address:</span>{" "}
+                {user.address || "-"}
+              </div>
+              <div>
+                <span className="font-semibold">Country:</span>{" "}
+                {user.country || "-"}
+              </div>
             </div>
           </div>
         </div>
@@ -116,76 +259,125 @@ export const UserDashboard = () => {
         transition={{ duration: 0.3 }}
         className="bg-white p-6 rounded-2xl shadow-xl"
       >
-        <h2 className="text-2xl font-bold mb-4 text-[#2d336b]">Edit Profile</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[var(--color-accent)]">
+          Edit Profile
+        </h2>
         <div className="flex items-center mb-6 gap-6">
           <img
-            src={user.profileImage}
+            src={user.profileImage || avatar}
             alt="User Avatar"
             className="w-20 h-20 rounded-full object-cover border-2 border-[#a9b5df]"
           />
           <div>
-            <label className="block mb-1 text-sm font-semibold text-[#2d336b]">Change Avatar</label>
+            <label className="block mb-1 text-sm text-left font-semibold text-[var(--color-text)]">
+              Change Avatar
+            </label>
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="text-sm text-[#2d336b] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-white file:bg-[#7886c7] hover:file:bg-[#2d336b]"
+              className="text-sm text-[var(--color-accent)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-white file:bg-[var(--color-accent)]"
             />
           </div>
         </div>
 
-        <form className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[#2d336b]">
+        <form
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[var(--color-text)]"
+          onSubmit={handleUpdate}
+        >
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="fullName">Full Name</label>
+            <label
+              className="block text-sm font-semibold mb-1"
+              htmlFor="fullName"
+            >
+              Full Name
+            </label>
             <input
               id="fullName"
               type="text"
               placeholder="John Doe"
               value={user.fullName}
               onChange={(e) => setUser({ ...user, fullName: e.target.value })}
-              className="w-full px-4 py-2 border border-[#a9b5df] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7886c7]"
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="email">Email</label>
+            <label className="block text-sm font-semibold mb-1" htmlFor="email">
+              Email
+            </label>
             <input
               id="email"
               type="email"
               placeholder="john@example.com"
               value={user.email}
               onChange={(e) => setUser({ ...user, email: e.target.value })}
-              className="w-full px-4 py-2 border border-[#a9b5df] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7886c7]"
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="phone">Phone</label>
+            <label className="block text-sm font-semibold mb-1" htmlFor="phone">
+              Phone
+            </label>
             <input
               id="phone"
               type="tel"
               placeholder="+1234567890"
               value={user.phone}
               onChange={(e) => setUser({ ...user, phone: e.target.value })}
-              className="w-full px-4 py-2 border border-[#a9b5df] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7886c7]"
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="country">Country</label>
+            <label
+              className="block text-sm font-semibold mb-1"
+              htmlFor="country"
+            >
+              Country
+            </label>
             <input
               id="country"
               type="text"
               placeholder="United States"
               value={user.country}
               onChange={(e) => setUser({ ...user, country: e.target.value })}
-              className="w-full px-4 py-2 border border-[#a9b5df] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7886c7]"
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold mb-1" htmlFor="bio">
+              Address
+            </label>
+            <input
+              id="bio"
+              rows={4}
+              placeholder="Tell us something about yourself..."
+              value={user.address}
+              onChange={(e) => setUser({ ...user, address: e.target.value })}
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            ></input>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold mb-1" htmlFor="bio">
+              Bio / Description
+            </label>
+            <textarea
+              id="bio"
+              rows={4}
+              placeholder="Tell us something about yourself..."
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50"
+            ></textarea>
           </div>
 
           <div className="md:col-span-2">
-            <button type="submit" className="w-full bg-[#7886c7] text-white font-semibold py-3 rounded-lg hover:bg-[#2d336b] transition-all">
-              Save Changes
+            <button
+              type="submit"
+              className="w-full bg-[var(--color-accent)] text-white font-semibold py-3 rounded-lg cursor-pointer"
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
@@ -201,14 +393,27 @@ export const UserDashboard = () => {
         <h2 className="text-2xl font-bold mb-4 text-[#2d336b]">Posted News</h2>
         <ul className="space-y-3">
           {posts.map((post) => (
-            <li key={post.id} className="flex justify-between items-center p-4 border rounded-lg bg-white shadow">
+            <li
+              key={post.id}
+              className="flex justify-between items-center p-4 border rounded-lg bg-white shadow"
+            >
               <div>
                 <h3 className="font-semibold text-[#2d336b]">{post.title}</h3>
                 <p className="text-[#7886c7]">{post.excerpt}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleEdit(post.id)} className="px-3 py-1 bg-blue-500 text-white rounded-md">Edit</button>
-                <button onClick={() => handleDelete(post.id)} className="px-3 py-1 bg-red-500 text-white rounded-md">Delete</button>
+                <button
+                  onClick={() => handleEdit(post.id)}
+                  className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(post.id)}
+                  className="px-3 py-1 bg-red-500 text-white rounded-md"
+                >
+                  Delete
+                </button>
               </div>
             </li>
           ))}
@@ -222,42 +427,66 @@ export const UserDashboard = () => {
         transition={{ duration: 0.3 }}
         className="bg-white p-6 rounded-2xl shadow-xl"
       >
-        <h2 className="text-2xl font-bold mb-4 text-[#2d336b]">Post News</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[var(--color-text)]">
+          Post News
+        </h2>
         <form onSubmit={handlePost} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="title">Title</label>
+            <label
+              className="block text-sm font-semibold mb-1 text-left"
+              htmlFor="title"
+            >
+              Title
+            </label>
             <input
               id="title"
               type="text"
               placeholder="Enter news title"
               value={newPost.title}
-              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-              className="w-full px-4 py-2 border border-[#a9b5df] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7886c7]"
+              onChange={(e) =>
+                setNewPost({ ...newPost, title: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="content">Content</label>
+            <label
+              className="block text-sm font-semibold mb-1 text-left"
+              htmlFor="content"
+            >
+              Content
+            </label>
             <textarea
               id="content"
               placeholder="Enter news content"
               value={newPost.content}
-              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-              className="w-full px-4 py-2 border border-[#a9b5df] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7886c7]"
+              onChange={(e) =>
+                setNewPost({ ...newPost, content: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             ></textarea>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="image">Image</label>
+            <label
+              className="block text-sm font-semibold mb-1 text-left"
+              htmlFor="image"
+            >
+              Image
+            </label>
             <input
               id="image"
               type="file"
               onChange={handleFileChange}
-              className="w-full mt-2 p-2 border border-[#a9b5df] rounded-lg"
+              className="w-full mt-2 p-2 border border-[var(--color-accent)] rounded-lg"
             />
           </div>
 
-          <button type="submit" className="w-full bg-[#7886c7] text-white font-semibold py-3 rounded-lg hover:bg-[#2d336b] transition-all">
+          <button
+            type="submit"
+            className="w-full bg-[var(--color-accent)] text-white font-semibold py-3 rounded-lg cursor-pointer"
+          >
             Post News
           </button>
         </form>
@@ -284,7 +513,7 @@ export const UserDashboard = () => {
       <div className="mt-16"></div>
       <div className="flex flex-col lg:flex-row min-h-screen bg-[#f9faff]">
         {/* Sidebar */}
-        <div className="bg-[var(--color-accent)] text-white lg:w-64 p-4 relative rounded-lg lg:rounded-r-none lg:rounded-tl-3xl">
+        <div className="bg-[var(--color-background)] text-[var(--color-text)] lg:w-64 p-4 relative rounded-lg lg:rounded-r-none lg:rounded-tl-3xl">
           <div className="flex items-center justify-between mb-4 px-2">
             <div className="flex items-center gap-3">
               <img
@@ -303,18 +532,24 @@ export const UserDashboard = () => {
           </div>
 
           <ul
-            className={`space-y-2 mt-6 ${isMobileMenuOpen ? "block" : "hidden"} lg:block`}
+            className={`space-y-2 mt-6 ${
+              isMobileMenuOpen ? "block" : "hidden"
+            } lg:block`}
           >
             {menuItems.map((item) => (
               <li
                 key={item.key}
                 onClick={() => {
-                  setActiveSection(item.key);
-                  setIsMobileMenuOpen(false);
+                  if (item.key === "logout") {
+                    handleLogout(); // call logout function
+                  } else {
+                    setActiveSection(item.key);
+                    setIsMobileMenuOpen(false);
+                  }
                 }}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition ${
                   activeSection === item.key
-                    ? "bg-[var(--color-background)] text-[#2d336b] font-semibold"
+                    ? "bg-[var(--color-accent)] text-white font-semibold"
                     : "hover:bg-[var(--color-background)] hover:text-[var(--color-text)]"
                 }`}
               >

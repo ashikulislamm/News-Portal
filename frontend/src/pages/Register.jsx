@@ -1,54 +1,73 @@
-// src/pages/Register.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
-export function RegisterForm({
-  onSubmit = (data) => console.log("register", data),
-  onGoogle = () => console.log("google"),
-  onApple = () => console.log("apple"),
-}) {
+export function RegisterForm() {
   const [form, setForm] = useState({
-    fullName: "",
+    name: "",
     email: "",
     address: "",
     password: "",
     phone: "",
-    country: "",
-    agree: false,
   });
 
-  const COUNTRIES = [
-    "Bangladesh",
-    "India",
-    "Pakistan",
-    "United States",
-    "United Kingdom",
-    "Canada",
-    "Australia",
-  ];
+  const [alert, setAlert] = useState({ message: "", type: "" });
+  // Handle the alert dismissal after a certain time
+  useEffect(() => {
+    if (alert.message) {
+      const timer = setTimeout(() => {
+        setAlert({ message: "", type: "" });
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer); // Cleanup the timer on component unmount
+    }
+  }, [alert.message]); // Effect runs only when alert.message changes
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    // very light checks
-    if (!form.agree) {
-      alert("Please accept the Terms / Privacy to continue.");
-      return;
+    //if (!form.agree) {
+    //alert("Please accept the Terms / Privacy to continue.");
+    //return;
+    //}
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        form
+      );
+
+      setAlert({
+        message: response.data.message,
+        type: "success",
+      });
+
+      // Clear the form after successful registration
+      setForm({
+        name: "",
+        email: "",
+        address: "",
+        password: "",
+        phone: "",
+      });
+    } catch (error) {
+      setAlert({
+        message: error.response?.data?.message || "Registration failed",
+        type: "error",
+      });
     }
-    onSubmit(form);
   };
 
   const isValid =
-    form.fullName.trim() &&
+    form.name.trim() &&
     form.email.trim() &&
     form.address.trim() &&
     form.password.length >= 6 &&
-    form.phone.trim() &&
-    form.country;
+    form.phone.trim();
 
   const inputBase =
     "w-full rounded-lg border border-[var(--color-accent)] bg-[var(--color-background)] px-3 py-2.5 text-[var(--color-text)] placeholder-[var(--color-primary)]/60 focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -61,10 +80,11 @@ export function RegisterForm({
         </h1>
 
         {/* Social sign up (optional) */}
+        {/* Social sign up (optional) */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={onGoogle}
+            //onClick={onGoogle}
             className="font-bold inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500/40"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
@@ -89,7 +109,7 @@ export function RegisterForm({
           </button>
           <button
             type="button"
-            onClick={onApple}
+            //onClick={onApple}
             className="font-bold inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500/40"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
@@ -99,7 +119,7 @@ export function RegisterForm({
           </button>
         </div>
 
-        {/* divider */}
+        {/* Divider */}
         <div className="relative my-6">
           <div className="border-t border-slate-700/50" />
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--color-background)] px-3 text-xs text-[var(--color-text)]">
@@ -107,17 +127,17 @@ export function RegisterForm({
           </span>
         </div>
 
-        {/* form */}
+        {/* Registration Form */}
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm text-[var(--color-text)]">
               Full Name
             </label>
             <input
-              name="fullName"
+              name="name"
               placeholder="Full Name"
               required
-              value={form.fullName}
+              value={form.name}
               onChange={handleChange}
               className={inputBase}
             />
@@ -187,28 +207,6 @@ export function RegisterForm({
             </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm text-[var(--color-text)]">
-              Country
-            </label>
-            <select
-              name="country"
-              required
-              value={form.country}
-              onChange={handleChange}
-              className={`${inputBase} pr-8`}
-            >
-              <option value="" disabled>
-                Select your country
-              </option>
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <label className="flex items-start gap-2 text-sm text-[var(--color-text)]">
             <input
               type="checkbox"
@@ -232,7 +230,6 @@ export function RegisterForm({
 
           <button
             type="submit"
-            disabled={!isValid || !form.agree}
             className="mt-2 w-full rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-sm font-bold text-white cursor-pointer"
           >
             Create account
@@ -248,6 +245,17 @@ export function RegisterForm({
             Sign in
           </Link>
         </p>
+
+        {/* Display Popup */}
+        {alert.message && (
+          <div
+            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
+              alert.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            {alert.message}
+          </div>
+        )}
       </div>
     </section>
   );

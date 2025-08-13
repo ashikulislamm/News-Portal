@@ -14,7 +14,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-5 z-50 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg shadow-lg">
+    <header className="sticky top-1 z-50 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg shadow-lg">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
           {/* Left: brand */}
