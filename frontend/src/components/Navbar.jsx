@@ -1,10 +1,22 @@
 // Navbar.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/logo.png"; // Assuming you have a logo file
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { UserContext } from "../context/UserContext.jsx";
+import { useContext } from "react";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, setUser } = useContext(UserContext);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  };
 
   const navItems = [
     { label: "Home", href: "/" },
@@ -44,19 +56,68 @@ export default function Navbar() {
               ))}
             </ul>
 
-            <div className="flex items-center gap-3">
-              <Link
-                to="/login"
-                className="border border-[var(--color-accent)] text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-250 focus:outline-none focus:ring-2 focus:ring-white/20 rounded-full px-3 py-1.5"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center rounded-full bg-[var(--color-accent)] text-white text-sm font-medium px-3 py-1.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                Get Started
-              </Link>
+            <div className="relative">
+              {!user ? (
+                // Show Sign In / Get Started if no user
+                <div className="flex items-center gap-3">
+                  <Link
+                    to="/login"
+                    className="border border-[var(--color-accent)] text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-250 focus:outline-none focus:ring-2 focus:ring-white/20 rounded-full px-3 py-1.5"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center rounded-full bg-[var(--color-accent)] text-white text-sm font-medium px-3 py-1.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              ) : (
+                // Show Dropdown with user's full name
+                <div className="relative">
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 rounded-full border border-[var(--color-accent)] px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-white/20"
+                  >
+                    {user.fullName}
+                    <svg
+                      className={`w-4 h-4 transition-transform ${
+                        dropdownOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        My Account
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-center block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -119,21 +180,68 @@ export default function Navbar() {
               </a>
             ))}
           </div>
-          <div className="border-t border-zinc-800 py-3 flex items-center gap-3 px-3">
-            <a
-              href="#"
-              className="flex-1 text-center rounded-full px-3 py-2 text-sm bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-gray-100"
-              onClick={() => setOpen(false)}
-            >
-              Sign In
-            </a>
-            <a
-              href="#"
-              className="flex-1 text-center rounded-full px-3 py-2 text-sm bg-white text-black font-medium hover:opacity-90"
-              onClick={() => setOpen(false)}
-            >
-              Get Started
-            </a>
+          <div className="relative py-5">
+            {!user ? (
+              // Show Sign In / Get Started if no user
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/login"
+                  className="border border-[var(--color-accent)] text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-250 focus:outline-none focus:ring-2 focus:ring-white/20 rounded-full px-3 py-1.5"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center rounded-full bg-[var(--color-accent)] text-white text-sm font-medium px-3 py-1.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/30"
+                >
+                  Get Started
+                </Link>
+              </div>
+            ) : (
+              // Show Dropdown with user's full name
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 rounded-full border border-[var(--color-accent)] px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-white/20"
+                >
+                  {user.fullName}
+                  <svg
+                    className={`w-4 h-4 transition-transform ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      My Account
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-center block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </nav>

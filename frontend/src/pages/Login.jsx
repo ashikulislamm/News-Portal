@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useContext } from "react";
+import { UserContext } from "../context/UserContext.jsx";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
+  const { setUser } = useContext(UserContext);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -30,6 +35,8 @@ export function LoginForm() {
         message: response.data.message || "Login successful",
         type: "success",
       });
+
+      setUser(response.data.user);
 
       // If login is successful, store the JWT token in localStorage
       localStorage.setItem("token", response.data.token); // Store JWT token
@@ -76,7 +83,7 @@ export function LoginForm() {
             />
           </div>
 
-          <div>
+          <div className="relative w-full">
             <label
               htmlFor="password"
               className="mb-1 block text-sm text-[var(--color-text)]"
@@ -86,14 +93,26 @@ export function LoginForm() {
             <input
               id="password"
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="current-password"
               required
               value={form.password}
               onChange={handleChange}
-              className="w-full rounded-lg border border-[var(--color-accent)] bg-[var(--color-background)] px-3 py-2.5 text-[var(--color-text)] placeholder-[var(--color-primary)]/60 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-[var(--color-accent)] bg-[var(--color-background)] px-3 py-2.5 pr-10 text-[var(--color-text)] placeholder-[var(--color-primary)]/60 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+            {/* Eye Icon inside input */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-2 top-6  flex items-center px-2 text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              {showPassword ? (
+                <EyeSlashIcon className="h-5 w-5" />
+              ) : (
+                <EyeIcon className="h-5 w-5" />
+              )}
+            </button>
           </div>
 
           <button

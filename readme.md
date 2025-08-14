@@ -82,21 +82,9 @@ Create **.env** files in both `backend/` and `frontend/`.
 
 ```
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/news_portal
+MONGO_URI=replace_with_a_mongodb_url
 JWT_SECRET=replace_with_a_strong_secret
 CORS_ORIGIN=http://localhost:5173
-# Optional integrations
-# IPFS_GATEWAY=
-# BLOCKCHAIN_RPC_URL=
-```
-
-`` (Vite example)
-
-```
-VITE_API_BASE_URL=http://localhost:5000/api
-# Optional social sign‑in
-# VITE_GOOGLE_CLIENT_ID=
-# VITE_APPLE_CLIENT_ID=
 ```
 
 > If you’re using Create React App or Next.js, adapt the variable names accordingly.

@@ -479,7 +479,7 @@ export const UserDashboard = () => {
               id="image"
               type="file"
               onChange={handleFileChange}
-              className="w-full mt-2 p-2 border border-[var(--color-accent)] rounded-lg"
+              className="w-full mt-2 p-2 border border-[var(--color-accent)] rounded-lg  file:text-white file:py-1 file:px-4 file:rounded-lg file:bg-[var(--color-accent)]"
             />
           </div>
 
