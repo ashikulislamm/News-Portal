@@ -44,6 +44,7 @@ export const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState("userInfo");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [alert, setAlert] = useState({ message: "", type: "" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Alert cleanup
@@ -66,10 +67,8 @@ export const UserDashboard = () => {
     // Redirect to login page
     navigate("/login");
   };
-
   const avatar = UserAvatar;
   const username = "John Doe";
-
   //For Users
   const [user, setUser] = useState({
     fullName: "",
@@ -79,7 +78,6 @@ export const UserDashboard = () => {
     country: "",
     profileImage: avatar, // default image
   });
-
   // Fetch user info after component mounts
   useEffect(() => {
     const fetchUser = async () => {
@@ -107,6 +105,7 @@ export const UserDashboard = () => {
           phone: response.data.phone,
           address: response.data.address,
           country: response.data.country,
+          _id: response.data._id,
         });
       } catch (err) {
         // Only logout if token is invalid or expired
@@ -129,7 +128,6 @@ export const UserDashboard = () => {
   }, []);
   // Update User Info
   const [loading, setLoading] = useState(false);
-
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -168,19 +166,40 @@ export const UserDashboard = () => {
       setLoading(false);
     }
   };
+  //---- CRUD Operations for Posts ----
+  const [posts, setPosts] = useState([]);
+  const currentUserId = user._id;
+  useEffect(() => {
+    const fetchUserPosts = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/news/user/${currentUserId}`
+        );
+        setPosts(res.data);
+      } catch (err) {
+        console.error("Failed to fetch user posts:", err);
+      }
+    };
+    fetchUserPosts();
+  }, [currentUserId]);
 
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: "News 1",
-      excerpt: "This is an example of a news article.",
-    },
-    {
-      id: 2,
-      title: "News 2",
-      excerpt: "This is another example of a news article.",
-    },
-  ]);
+  const handleDelete = async (id) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:5000/api/news/${id}`
+      );
+
+      // Remove the post from local state after deleting
+      setPosts((prev) => prev.filter((post) => post._id !== id));
+      setAlert({ message: response.data.message, type: "success" });
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+      setAlert({
+        message: err.response?.data?.message || "Failed to delete post",
+        type: "error",
+      });
+    }
+  };
 
   //For Post News
   const [newPost, setNewPost] = useState({
@@ -188,13 +207,10 @@ export const UserDashboard = () => {
     content: "",
   });
   const [file, setFile] = useState(null);
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setFile(file);
   };
-
-  //Post News Function
   const handlePost = async (e) => {
     e.preventDefault();
 
@@ -225,13 +241,50 @@ export const UserDashboard = () => {
       });
     }
   };
+  //-----------Edit Post-------------------
+  const [editPost, setEditPost] = useState({
+    title: "",
+    content: "",
+    _id: "",
+  });
 
-  const handleEdit = (postId) => {
-    console.log("Editing post:", postId);
+  const openEditModal = (id) => {
+    const postToEdit = posts.find((post) => post._id === id);
+    if (postToEdit) {
+      setEditPost({
+        ...postToEdit,
+      });
+    }
+    setIsModalOpen(true); // Open modal
   };
+  const handleEditPost = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `http://localhost:5000/api/news/${editPost._id}`,
+        {
+          title: editPost.title,
+          content: editPost.content,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-  const handleDelete = (postId) => {
-    setPosts(posts.filter((post) => post.id !== postId));
+        const res = await axios.get(
+      `http://localhost:5000/api/news/user/${currentUserId}`
+    );
+    setPosts(res.data); // Re-set posts from the server
+
+      setIsModalOpen(false); // Close the modal
+      setAlert({ message: "Post updated successfully", type: "success" });
+
+    } catch (err) {
+      setAlert({
+        message: err.response?.data?.message || "Failed to update post",
+        type: "error",
+      });
+    }
   };
 
   const sections = {
@@ -424,41 +477,114 @@ export const UserDashboard = () => {
       </motion.div>
     ),
     postedNews: (
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white p-6 rounded-2xl shadow-xl"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-[#2d336b]">Posted News</h2>
-        <ul className="space-y-3">
-          {posts.map((post) => (
-            <li
-              key={post.id}
-              className="flex justify-between items-center p-4 border rounded-lg bg-white shadow"
-            >
-              <div>
-                <h3 className="font-semibold text-[#2d336b]">{post.title}</h3>
-                <p className="text-[#7886c7]">{post.excerpt}</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(post.id)}
-                  className="px-3 py-1 bg-blue-500 text-white rounded-md"
+      <>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white p-6 rounded-2xl shadow-xl"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-[#2d336b]">
+            Posted News
+          </h2>
+          {posts.length === 0 ? (
+            <p className="text-[#7886c7]">No posts yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {posts.map((post) => (
+                <li
+                  key={post._id}
+                  className="flex flex-col md:flex-row justify-between items-center p-4 rounded-lg bg-[var(--color-background)] shadow"
                 >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(post.id)}
-                  className="px-3 py-1 bg-red-500 text-white rounded-md"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </motion.div>
+                  <div>
+                    <h3 className="font-semibold text-[#2d336b]">
+                      {post.title}
+                    </h3>
+                    <p className="text-[#7886c7] line-clamp-3 pb-2">
+                      {post.content || post.excerpt}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditModal(post._id)}
+                      className="px-3 py-1 bg-[var(--color-accent)] text-white rounded-md cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post._id)}
+                      className="px-3 py-1 bg-red-500 text-white rounded-md cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </motion.div>
+
+        {isModalOpen && (
+          <div className="fixed inset-0 flex justify-center items-center bg-gray-500 bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-200 h-140">
+              <h3 className="text-2xl font-semibold mb-4">Edit Post</h3>
+              <form onSubmit={(e) => e.preventDefault()}>
+                <div className="mb-4">
+                  <label htmlFor="title" className="block mb-2">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    value={editPost.title}
+                    onChange={(e) =>
+                      setEditPost({ ...editPost, title: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="content" className="block mb-2">
+                    Content
+                  </label>
+                  <textarea
+                    id="content"
+                    value={editPost.content}
+                    onChange={(e) =>
+                      setEditPost({ ...editPost, content: e.target.value })
+                    }
+                    className="w-full h-70 px-4 py-2 border border-gray-300 rounded-md resize-none"
+                    rows="5"
+                  />
+                </div>
+                <div className="flex justify-between gap-4">
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 bg-[var(--color-text)] text-white rounded-md"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleEditPost}
+                    className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-md"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {alert.message && (
+          <div
+            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
+              alert.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            {alert.message}
+          </div>
+        )}
+      </>
     ),
     postNews: (
       <motion.div
@@ -570,7 +696,7 @@ export const UserDashboard = () => {
                 alt="Avatar"
                 className="w-10 h-10 rounded-full border-2 border-white object-cover"
               />
-              <p className="text-sm font-medium">{username}</p>
+              <p className="text-sm font-medium">{user.fullName}</p>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

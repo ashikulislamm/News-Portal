@@ -68,4 +68,61 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+// Fetch news posted by a specific user
+router.get("/user/:userId", async (req, res) => {
+  try {
+    const posts = await News.find({ "author.userId": req.params.userId }).sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user posts" });
+  }
+});
+
+// DELETE /api/news/:id
+router.delete("/:id", async (req, res) => {
+  try {
+    const newsPost = await News.findByIdAndDelete(req.params.id);
+
+    if (!newsPost) {
+      return res.status(404).json({ message: "News post not found" });
+    }
+
+    res.status(200).json({ message: "News post deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PUT /api/news/:id - Update the news post
+router.put("/:id", authMiddleware, async (req, res) => {
+  const { title, content } = req.body;
+
+  try {
+    const news = await News.findById(req.params.id);
+
+    if (!news) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Check if the user is the author of the post
+    if (news.author.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Update the post with new data
+    news.title = title || news.title;
+    news.content = content || news.content;
+
+    const updatedNews = await news.save();
+
+    res.status(200).json({
+      message: "Post updated successfully",
+      news: updatedNews,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 export default router;
