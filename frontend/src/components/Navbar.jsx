@@ -180,10 +180,10 @@ export default function Navbar() {
               </a>
             ))}
           </div>
-          <div className="relative py-5">
+          <div className="relative px-15 py-5">
             {!user ? (
               // Show Sign In / Get Started if no user
-              <div className="flex items-center gap-3">
+              <div className="flex gap-5">
                 <Link
                   to="/login"
                   className="border border-[var(--color-accent)] text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-250 focus:outline-none focus:ring-2 focus:ring-white/20 rounded-full px-3 py-1.5"

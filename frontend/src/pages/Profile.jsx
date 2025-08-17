@@ -43,7 +43,19 @@ const menuItems = [
 export const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState("userInfo");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [alert, setAlert] = useState({ message: "", type: "" });
   const navigate = useNavigate();
+
+  // Alert cleanup
+  useEffect(() => {
+    if (alert.message) {
+      const timer = setTimeout(() => {
+        setAlert({ message: "", type: "" });
+      }, 3000); // 3 seconds
+
+      return () => clearTimeout(timer); // Cleanup the timer on component unmount
+    }
+  }, [alert.message]); // Effect runs only when alert.message changes
 
   const handleLogout = () => {
     // Remove token or any user data from localStorage
@@ -58,6 +70,7 @@ export const UserDashboard = () => {
   const avatar = UserAvatar;
   const username = "John Doe";
 
+  //For Users
   const [user, setUser] = useState({
     fullName: "",
     email: "",
@@ -169,30 +182,48 @@ export const UserDashboard = () => {
     },
   ]);
 
+  //For Post News
   const [newPost, setNewPost] = useState({
     title: "",
     content: "",
-    image: null,
   });
+  const [file, setFile] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setNewPost({ ...newPost, image: file });
+    setFile(file);
   };
 
-  const handlePost = (e) => {
+  //Post News Function
+  const handlePost = async (e) => {
     e.preventDefault();
-    const postData = new FormData();
-    postData.append("title", newPost.title);
-    postData.append("content", newPost.content);
-    postData.append("image", newPost.image);
 
-    // Simulate adding a new post
-    setPosts([
-      ...posts,
-      { id: posts.length + 1, title: newPost.title, excerpt: newPost.content },
-    ]);
-    setNewPost({ title: "", content: "", image: null });
+    try {
+      const formData = new FormData();
+      formData.append("title", newPost.title);
+      formData.append("content", newPost.content);
+      if (file) formData.append("image", file);
+
+      const response = await axios.post(
+        "http://localhost:5000/api/news",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      setAlert({ message: response.data.message, type: "success" });
+      setNewPost({ title: "", content: "" });
+      setFile(null);
+    } catch (err) {
+      setAlert({
+        message: err.response?.data?.message || "Failed to post news",
+        type: "error",
+      });
+    }
   };
 
   const handleEdit = (postId) => {
@@ -381,6 +412,15 @@ export const UserDashboard = () => {
             </button>
           </div>
         </form>
+        {alert.message && (
+          <div
+            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
+              alert.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            {alert.message}
+          </div>
+        )}
       </motion.div>
     ),
     postedNews: (
@@ -490,6 +530,15 @@ export const UserDashboard = () => {
             Post News
           </button>
         </form>
+        {alert.message && (
+          <div
+            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
+              alert.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            {alert.message}
+          </div>
+        )}
       </motion.div>
     ),
     logout: (

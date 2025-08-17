@@ -14,7 +14,10 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = { id: decoded.userId  }; // Attach user info to request
+     if (!decoded.userId || !decoded.fullName) {
+      return res.status(401).json({ message: "Token invalid: missing data" });
+    }
+    req.user = { id: decoded.userId }; // Attach user info to request
     next(); // Pass control to the next handler
   } catch (err) {
     console.error(err);

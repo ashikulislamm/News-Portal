@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id , fullName: user.fullName }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
     // Send **only one response** with everything
@@ -62,6 +62,7 @@ export const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        id: user._id,
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
