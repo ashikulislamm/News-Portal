@@ -4,7 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Card({ post }) {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleReadMore = () => {
     // Navigate to news details page with the post ID
@@ -15,7 +15,7 @@ function Card({ post }) {
       <div className="px-3 pt-3">
         {post.imageUrl && (
           <img
-            src={`http://localhost:5000${post.imageUrl}`}
+            src={`${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`}
             alt={post.title}
             className="h-44 w-full object-cover rounded-xl"
             loading="lazy"
@@ -66,7 +66,9 @@ export function Trending() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/news`
+        );
 
         const latestPosts = res.data.slice(0, 6); // Get the latest 6 posts
         // res.data already has authorName, imageUrl, createdAt, title, content

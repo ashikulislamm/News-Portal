@@ -91,7 +91,7 @@ export const UserDashboard = () => {
 
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/auth/profile",
+          `${import.meta.env.VITE_API_BASE_URL}/api/auth/profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -136,7 +136,7 @@ export const UserDashboard = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.put(
-        "http://localhost:5000/api/auth/profile",
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/profile`,
         {
           fullName: user.fullName,
           email: user.email,
@@ -173,7 +173,7 @@ export const UserDashboard = () => {
     const fetchUserPosts = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/news/user/${currentUserId}`
+          `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
         );
         setPosts(res.data);
       } catch (err) {
@@ -186,7 +186,7 @@ export const UserDashboard = () => {
   const handleDelete = async (id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:5000/api/news/${id}`
+        `${import.meta.env.VITE_API_BASE_URL}/api/news/${id}`
       );
 
       // Remove the post from local state after deleting
@@ -221,7 +221,7 @@ export const UserDashboard = () => {
       if (file) formData.append("image", file);
 
       const response = await axios.post(
-        "http://localhost:5000/api/news",
+        `${import.meta.env.VITE_API_BASE_URL}/api/news`,
         formData,
         {
           headers: {
@@ -261,7 +261,7 @@ export const UserDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:5000/api/news/${editPost._id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/news/${editPost._id}`,
         {
           title: editPost.title,
           content: editPost.content,
@@ -271,14 +271,13 @@ export const UserDashboard = () => {
         }
       );
 
-        const res = await axios.get(
-      `http://localhost:5000/api/news/user/${currentUserId}`
-    );
-    setPosts(res.data); // Re-set posts from the server
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
+      );
+      setPosts(res.data); // Re-set posts from the server
 
       setIsModalOpen(false); // Close the modal
       setAlert({ message: "Post updated successfully", type: "success" });
-
     } catch (err) {
       setAlert({
         message: err.response?.data?.message || "Failed to update post",

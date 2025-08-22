@@ -37,7 +37,7 @@ export function RegisterForm() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/register`,
         form
       );
 

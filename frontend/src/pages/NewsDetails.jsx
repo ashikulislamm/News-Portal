@@ -3,13 +3,15 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 
 export function NewsDetails() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const [post, setPost] = useState(null);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/news/${id}`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/news/${id}`
+        );
         setPost(res.data);
       } catch (err) {
         console.error("Failed to fetch news details:", err);
@@ -24,7 +26,7 @@ export function NewsDetails() {
     <div className="max-w-4xl mx-auto p-4 mt-5">
       {post.imageUrl && (
         <img
-          src={`http://localhost:5000${post.imageUrl}`}
+          src={`${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`}
           alt={post.title}
           className="w-full rounded-xl mb-4"
         />

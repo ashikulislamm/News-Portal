@@ -7,7 +7,7 @@ function Card({ post }) {
       <div className="px-3 pt-3">
         {post.imageUrl && (
           <img
-            src={`http://localhost:5000${post.imageUrl}`}
+            src={`${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`}
             alt={post.title}
             className="h-44 w-full object-cover rounded-xl"
             loading="lazy"
@@ -29,7 +29,10 @@ function Card({ post }) {
               {post.createdAt
                 ? new Date(post.createdAt).toLocaleDateString()
                 : "Unknown Date"}{" "}
-              · {post.createdAt ? new Date(post.createdAt).toLocaleTimeString() : "Unknown Time"}
+              ·{" "}
+              {post.createdAt
+                ? new Date(post.createdAt).toLocaleTimeString()
+                : "Unknown Time"}
             </p>
           </div>
         </div>
@@ -55,7 +58,9 @@ export function News() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/news`
+        );
         // res.data already has authorName, imageUrl, createdAt, title, content
         setPosts(res.data);
       } catch (err) {
