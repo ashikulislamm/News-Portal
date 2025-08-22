@@ -125,4 +125,18 @@ router.put("/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+// GET single news post by ID with populated author
+router.get("/:id", async (req, res) => {
+  try {
+    const post = await News.findById(req.params.id).populate("author.userId", "fullName email");
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    res.json({
+      ...post._doc,
+      authorName: post.author?.fullName || post.author?.userId?.fullName || "Unknown Author",
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch post" });
+  }
+});
 export default router;

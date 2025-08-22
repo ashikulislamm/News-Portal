@@ -10,6 +10,7 @@ import { News } from "./pages/News.jsx";
 import { RegisterForm } from "./pages/Register.jsx";
 import { UserDashboard } from "./pages/Profile.jsx";
 import { PrivateRoute } from "./components/PrivateRoutes.jsx";
+import { NewsDetails } from "./pages/NewsDetails.jsx";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -26,6 +27,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/profile" element={<UserDashboard />} />
         </Route>
+        <Route path="/news/:id" element={<NewsDetails />} />
       </Routes>
       <Footer />
     </>

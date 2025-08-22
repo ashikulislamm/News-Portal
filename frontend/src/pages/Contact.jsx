@@ -39,14 +39,14 @@ export function ContactPage() {
                   placeholder="First Name"
                   value={form.firstName}
                   onChange={onChange}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:border-slate-600 dark:bg-[#0d1430] dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-slate-700/40"
+                  className="w-full rounded-md border border-[var(--color-accent)] bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
                 />
                 <input
                   name="lastName"
                   placeholder="Last Name"
                   value={form.lastName}
                   onChange={onChange}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:border-slate-600 dark:bg-[#0d1430] dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-slate-700/40"
+                  className="w-full rounded-md border border-[var(--color-accent)] bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
                 />
               </div>
 
@@ -55,7 +55,7 @@ export function ContactPage() {
                 placeholder="Phone Number"
                 value={form.phone}
                 onChange={onChange}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:border-slate-600 dark:bg-[#0d1430] dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-slate-700/40"
+                className="w-full rounded-md border border-[var(--color-accent)] bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
               />
 
               <textarea
@@ -64,7 +64,7 @@ export function ContactPage() {
                 placeholder="Message"
                 value={form.message}
                 onChange={onChange}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:border-slate-600 dark:bg-[#0d1430] dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-slate-700/40"
+                className="w-full rounded-md border border-[var(--color-accent)] bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
               />
 
               <label className="flex items-start gap-3 text-sm text-gray-700 dark:text-slate-300">
@@ -73,9 +73,9 @@ export function ContactPage() {
                   name="agree"
                   checked={form.agree}
                   onChange={onChange}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-300 dark:border-slate-600 dark:bg-[#0d1430] dark:focus:ring-slate-700/40"
+                  className="mt-1 h-4 w-4 rounded border-[var(--color-accent)] text-black"
                 />
-                <span>
+                <span className="text-black">
                   You agree to our{" "}
                   <a href="#" className="font-semibold underline">
                     Privacy Policy
@@ -86,7 +86,7 @@ export function ContactPage() {
 
               <button
                 type="submit"
-                className="mt-2 w-full rounded-md bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+                className="mt-2 w-full rounded-md bg-[var(--color-accent)] px-4 py-3 text-sm font-semibold text-white"
                 disabled={!form.firstName || !form.message || !form.agree}
               >
                 SEND MESSAGE
@@ -96,10 +96,10 @@ export function ContactPage() {
 
           {/* RIGHT — info */}
           <div className="flex flex-col justify-center">
-            <h3 className="text-3xl font-semibold text-[var(--color-text)]">
+            <h3 className="text-3xl font-semibold text-[var(--color-accent)]">
               Get in Touch
             </h3>
-            <p className="mt-3 max-w-md text-[var(--color-text-secondary)]">
+            <p className="mt-3 text-[var(--color-text-secondary)] text-center">
               You need more information? Check what other persons are saying
               about our product. They are very happy with their purchase.
             </p>

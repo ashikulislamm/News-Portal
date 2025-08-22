@@ -700,7 +700,7 @@ export const UserDashboard = () => {
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden text-white focus:outline-none hover:bg-[#7886c7] p-2 rounded-lg"
+              className="lg:hidden text-[var(--color-accent)] focus:outline-none hover:bg-[#7886c7] p-2 rounded-lg"
             >
               <Bars3Icon className="h-6 w-6" />
             </button>

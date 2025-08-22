@@ -1,8 +1,15 @@
 // src/components/Trending.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function Card({ post }) {
+   const navigate = useNavigate();
+
+  const handleReadMore = () => {
+    // Navigate to news details page with the post ID
+    navigate(`/news/${post._id}`);
+  };
   return (
     <article className="bg-[var(--color-primary)] text-slate-200 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-3 pt-3">
@@ -43,12 +50,12 @@ function Card({ post }) {
         <p className="text-slate-300/90 leading-relaxed mb-4 line-clamp-3">
           {post.content || post.excerpt || "No description available."}
         </p>
-        <a
-          href="#"
+        <button
+          onClick={handleReadMore}
           className="text-[var(--color-accent)] hover:text-sky-300 font-medium"
         >
           Read more →
-        </a>
+        </button>
       </div>
     </article>
   );

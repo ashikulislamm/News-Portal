@@ -1,7 +1,7 @@
 // Navbar.jsx
 import { useState, useEffect } from "react";
 import logo from "../assets/logo.png"; // Assuming you have a logo file
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { UserContext } from "../context/UserContext.jsx";
 import { useContext } from "react";
 
@@ -10,6 +10,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const location = useLocation();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -39,21 +40,25 @@ export default function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <ul className="flex items-center gap-6">
-              {navItems.map((item, i) => (
-                <li key={i}>
-                  <Link
-                    to={item.href}
-                    className={`px-2 py-1 rounded-md text-sm hover:text-white hover:bg-[var(--color-accent)]/80 transition
-                    ${
-                      item.label === "Home"
-                        ? "bg-[var(--color-accent)] text-white"
-                        : "text-[var(--color-text)]"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {navItems.map((item, i) => {
+                const isActive = location.pathname === item.href; // check if current route matches
+
+                return (
+                  <li key={i}>
+                    <Link
+                      to={item.href}
+                      className={`px-2 py-1 rounded-md text-sm hover:text-white hover:bg-[var(--color-accent)]/80 transition
+                ${
+                  isActive
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "text-[var(--color-text)]"
+                }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="relative">
@@ -124,7 +129,7 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <button
             onClick={() => setOpen((v) => !v)}
-            className="md:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-300 hover:bg-zinc-800/60 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="md:hidden inline-flex items-center justify-center rounded-md p-2 text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
             aria-controls="mobile-menu"
             aria-expanded={open}
             aria-label="Toggle menu"
