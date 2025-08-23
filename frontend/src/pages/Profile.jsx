@@ -8,7 +8,7 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
-import UserAvatar from "../assets/Logo.png";
+//import UserAvatar from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -67,7 +67,7 @@ export const UserDashboard = () => {
     // Redirect to login page
     navigate("/login");
   };
-  const avatar = UserAvatar;
+  const avatar = "https://i.pravatar.cc/50?img=1";
   const username = "John Doe";
   //For Users
   const [user, setUser] = useState({
