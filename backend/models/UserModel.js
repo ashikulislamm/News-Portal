@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, required: true, unique: true },
   country: { type: String, required: true },  
   password: { type: String, required: true },
+  bio: { type: String, required: true , default: "No bio available" }
 });
 
 export default mongoose.model("Users", userSchema);

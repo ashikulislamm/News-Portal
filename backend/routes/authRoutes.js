@@ -27,7 +27,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
     const userId = req.user.id;
 
     // Destructure fields from request body
-    const { fullName, email, phone, country, address } = req.body;
+    const { fullName, email, phone, country, address, bio } = req.body;
 
     // Find user
     const user = await User.findById(userId);
@@ -39,6 +39,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
     if (phone) user.phone = phone;
     if (country) user.country = country;
     if (address) user.address = address;
+    if (bio) user.bio = bio;
 
     await user.save();
 

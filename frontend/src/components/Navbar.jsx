@@ -4,6 +4,7 @@ import logo from "../assets/logo.png"; // Assuming you have a logo file
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { UserContext } from "../context/UserContext.jsx";
 import { useContext } from "react";
+import { UserIcon } from "@heroicons/react/24/outline";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -188,7 +189,7 @@ export default function Navbar() {
           <div className="relative px-15 py-5">
             {!user ? (
               // Show Sign In / Get Started if no user
-              <div className="flex gap-5">
+              <div className="flex flex-col gap-5">
                 <Link
                   to="/login"
                   className="border border-[var(--color-accent)] text-sm text-[var(--color-text)] hover:bg-[var(--color-accent)] hover:text-white transition duration-250 focus:outline-none focus:ring-2 focus:ring-white/20 rounded-full px-3 py-1.5"
@@ -197,7 +198,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center rounded-full bg-[var(--color-accent)] text-white text-sm font-medium px-3 py-1.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  className="items-center rounded-full bg-[var(--color-accent)] text-white text-sm font-medium px-3 py-1.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
                   Get Started
                 </Link>
@@ -229,10 +230,10 @@ export default function Navbar() {
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-40 bg-red-500 rounded-lg shadow-lg z-50">
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-accent)]/60"
                       onClick={() => setDropdownOpen(false)}
                     >
                       My Account

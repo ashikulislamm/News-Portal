@@ -76,6 +76,7 @@ export const UserDashboard = () => {
     phone: "",
     address: "",
     country: "",
+    bio: "",
     profileImage: avatar, // default image
   });
   // Fetch user info after component mounts
@@ -105,6 +106,7 @@ export const UserDashboard = () => {
           phone: response.data.phone,
           address: response.data.address,
           country: response.data.country,
+          bio: response.data.bio || "",
           _id: response.data._id,
         });
       } catch (err) {
@@ -143,6 +145,7 @@ export const UserDashboard = () => {
           phone: user.phone,
           country: user.country,
           address: user.address,
+          bio: user.bio,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -305,9 +308,8 @@ export const UserDashboard = () => {
               {user.fullName || "User"} {/* display actual full name */}
             </p>
             <p className="text-gray-600 leading-relaxed">
-              I build secure and decentralized solutions for protecting
-              intellectual property. My mission is to empower creators through
-              robust blockchain verification and seamless licensing processes.
+              {user.bio ||
+                "I build secure and decentralized solutions for protecting intellectual property. My mission is to empower creators through robust blockchain verification and seamless licensing processes."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 mt-6 gap-y-4 text-sm text-[#2d336b]">
               <div>
@@ -450,7 +452,9 @@ export const UserDashboard = () => {
               id="bio"
               rows={4}
               placeholder="Tell us something about yourself..."
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50"
+              value={user.bio}
+              onChange={(e) => setUser({ ...user, bio: e.target.value })}
+              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             ></textarea>
           </div>
 
