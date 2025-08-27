@@ -21,8 +21,10 @@ app.use(express.json());
 // Needed for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const buildPath = path.join(__dirname, "../frontend/build");
 // Serve uploads folder statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static(buildPath));
 
 // Routes
 app.use("/api/auth", authRoutes);
