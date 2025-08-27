@@ -4,11 +4,12 @@ import axios from "axios";
 
 export function RegisterForm() {
   const [form, setForm] = useState({
-    name: "",
+    fullName: "",
     email: "",
     address: "",
     password: "",
     phone: "",
+    country: "",
   });
 
   const [alert, setAlert] = useState({ message: "", type: "" });
@@ -48,11 +49,12 @@ export function RegisterForm() {
 
       // Clear the form after successful registration
       setForm({
-        name: "",
+        fullName: "",
         email: "",
         address: "",
         password: "",
         phone: "",
+        country: "",
       });
     } catch (error) {
       setAlert({
@@ -63,11 +65,12 @@ export function RegisterForm() {
   };
 
   const isValid =
-    form.name.trim() &&
+    form.fullName.trim() &&
     form.email.trim() &&
     form.address.trim() &&
     form.password.length >= 6 &&
-    form.phone.trim();
+    form.phone.trim() &&
+    form.country.trim();
 
   const inputBase =
     "w-full rounded-lg border border-[var(--color-accent)] bg-[var(--color-background)] px-3 py-2.5 text-[var(--color-text)] placeholder-[var(--color-primary)]/60 focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -134,10 +137,10 @@ export function RegisterForm() {
               Full Name
             </label>
             <input
-              name="name"
+              name="fullName"
               placeholder="Full Name"
               required
-              value={form.name}
+              value={form.fullName}
               onChange={handleChange}
               className={inputBase}
             />
@@ -168,6 +171,20 @@ export function RegisterForm() {
               placeholder="Street, City, ZIP"
               required
               value={form.address}
+              onChange={handleChange}
+              className={inputBase}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-[var(--color-text)]">
+              Country
+            </label>
+            <input
+              name="country"
+              placeholder="Enter your country"
+              required
+              value={form.country}
               onChange={handleChange}
               className={inputBase}
             />
