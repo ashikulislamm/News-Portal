@@ -4,7 +4,7 @@ A modern, full‑stack news application where users can browse the latest storie
 
 > **Monorepo:** `frontend/` (React + Tailwind) & `backend/` (Node.js/Express, MongoDB)
 
-**[Live](https://news-portal-ashik.vercel.app/)** 
+**[Live Demo](https://news-portal-ashik.vercel.app/)** 
 
 ---
 
