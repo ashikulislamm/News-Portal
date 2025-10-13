@@ -62,9 +62,14 @@ function Card({ post }) {
 
 export function News() {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchNews = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/news`
         );
@@ -72,11 +77,37 @@ export function News() {
         setPosts(res.data);
       } catch (err) {
         console.error("Failed to fetch news:", err);
+        setError("Failed to load news. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchNews();
   }, []);
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="bg-[var(--color-primary)] rounded-2xl shadow-sm overflow-hidden animate-pulse">
+      <div className="px-3 pt-3">
+        <div className="h-44 w-full bg-slate-600 rounded-xl"></div>
+      </div>
+      <div className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="h-8 w-8 bg-slate-600 rounded-full"></div>
+          <div className="flex-1">
+            <div className="h-4 bg-slate-600 rounded mb-1 w-24"></div>
+            <div className="h-3 bg-slate-600 rounded w-32"></div>
+          </div>
+        </div>
+        <div className="h-6 bg-slate-600 rounded mb-2 w-full"></div>
+        <div className="h-4 bg-slate-600 rounded mb-1 w-full"></div>
+        <div className="h-4 bg-slate-600 rounded mb-1 w-3/4"></div>
+        <div className="h-4 bg-slate-600 rounded mb-4 w-1/2"></div>
+        <div className="h-4 bg-slate-600 rounded w-24"></div>
+      </div>
+    </div>
+  );
+
   return (
     <section className="py-8">
       <div className="mx-auto max-w-7xl px-4">
@@ -84,12 +115,42 @@ export function News() {
           Explore Latest News
         </h2>
 
-        {/* responsive grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <Card key={post._id} post={post} />
-          ))}
-        </div>
+        {/* Error state */}
+        {error && (
+          <div className="text-center py-12">
+            <div className="text-red-500 text-lg mb-4">{error}</div>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-[var(--color-accent)] text-white px-6 py-2 rounded-lg hover:bg-opacity-80 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(9)].map((_, index) => (
+              <LoadingSkeleton key={index} />
+            ))}
+          </div>
+        )}
+
+        {/* Content state */}
+        {!loading && !error && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {posts.length > 0 ? (
+              posts.map((post) => <Card key={post._id} post={post} />)
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <div className="text-[var(--color-text)] text-lg">
+                  No news articles available at the moment.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

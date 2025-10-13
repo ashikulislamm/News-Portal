@@ -45,6 +45,10 @@ export const UserDashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [alert, setAlert] = useState({ message: "", type: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Alert cleanup
@@ -64,8 +68,13 @@ export const UserDashboard = () => {
     // Optionally clear other user info
     localStorage.removeItem("user");
 
-    // Redirect to login page
-    navigate("/login");
+    // Show success message briefly before redirect
+    setAlert({ message: "Logged out successfully!", type: "success" });
+
+    // Redirect to login page after a short delay
+    setTimeout(() => {
+      navigate("/login");
+    }, 1000);
   };
   const avatar = "https://i.pravatar.cc/50?img=1";
   const username = "John Doe";
@@ -171,9 +180,13 @@ export const UserDashboard = () => {
   };
   //---- CRUD Operations for Posts ----
   const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
   const currentUserId = user._id;
   useEffect(() => {
     const fetchUserPosts = async () => {
+      if (!currentUserId) return;
+
+      setPostsLoading(true);
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
@@ -181,26 +194,40 @@ export const UserDashboard = () => {
         setPosts(res.data);
       } catch (err) {
         console.error("Failed to fetch user posts:", err);
+      } finally {
+        setPostsLoading(false);
       }
     };
     fetchUserPosts();
   }, [currentUserId]);
 
-  const handleDelete = async (id) => {
+  const openDeleteModal = (post) => {
+    setPostToDelete(post);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!postToDelete) return;
+
+    setDeleteLoading(true);
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/api/news/${id}`
+        `${import.meta.env.VITE_API_BASE_URL}/api/news/${postToDelete._id}`
       );
 
       // Remove the post from local state after deleting
-      setPosts((prev) => prev.filter((post) => post._id !== id));
+      setPosts((prev) => prev.filter((post) => post._id !== postToDelete._id));
       setAlert({ message: response.data.message, type: "success" });
+      setDeleteModalOpen(false);
+      setPostToDelete(null);
     } catch (err) {
       console.error("Failed to delete post:", err);
       setAlert({
         message: err.response?.data?.message || "Failed to delete post",
         type: "error",
       });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -210,6 +237,7 @@ export const UserDashboard = () => {
     content: "",
   });
   const [file, setFile] = useState(null);
+  const [postLoading, setPostLoading] = useState(false);
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setFile(file);
@@ -217,6 +245,7 @@ export const UserDashboard = () => {
   const handlePost = async (e) => {
     e.preventDefault();
 
+    setPostLoading(true);
     try {
       const formData = new FormData();
       formData.append("title", newPost.title);
@@ -237,11 +266,21 @@ export const UserDashboard = () => {
       setAlert({ message: response.data.message, type: "success" });
       setNewPost({ title: "", content: "" });
       setFile(null);
+
+      // Refresh the posts list if user is currently viewing posted news
+      if (activeSection === "postedNews") {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
+        );
+        setPosts(res.data);
+      }
     } catch (err) {
       setAlert({
         message: err.response?.data?.message || "Failed to post news",
         type: "error",
       });
+    } finally {
+      setPostLoading(false);
     }
   };
   //-----------Edit Post-------------------
@@ -250,6 +289,7 @@ export const UserDashboard = () => {
     content: "",
     _id: "",
   });
+  const [editLoading, setEditLoading] = useState(false);
 
   const openEditModal = (id) => {
     const postToEdit = posts.find((post) => post._id === id);
@@ -261,6 +301,7 @@ export const UserDashboard = () => {
     setIsModalOpen(true); // Open modal
   };
   const handleEditPost = async () => {
+    setEditLoading(true);
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
@@ -286,6 +327,8 @@ export const UserDashboard = () => {
         message: err.response?.data?.message || "Failed to update post",
         type: "error",
       });
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -487,95 +530,516 @@ export const UserDashboard = () => {
           transition={{ duration: 0.3 }}
           className="bg-white p-6 rounded-2xl shadow-xl"
         >
-          <h2 className="text-2xl font-bold mb-4 text-[#2d336b]">
-            Posted News
-          </h2>
-          {posts.length === 0 ? (
-            <p className="text-[#7886c7]">No posts yet.</p>
-          ) : (
-            <ul className="space-y-3">
-              {posts.map((post) => (
-                <li
-                  key={post._id}
-                  className="flex flex-col md:flex-row justify-between items-center p-4 rounded-lg bg-[var(--color-background)] shadow"
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-[#2d336b] flex items-center gap-2">
+              <FolderIcon className="h-5 w-5 md:h-6 md:w-6 text-[var(--color-accent)] flex-shrink-0" />
+              <span className="break-words">My Published Articles</span>
+            </h2>
+            <div className="text-xs md:text-sm text-[#7886c7] bg-[var(--color-background)] px-3 py-1 rounded-full self-start sm:self-auto whitespace-nowrap">
+              {posts.length} {posts.length === 1 ? "Article" : "Articles"}
+            </div>
+          </div>
+
+          {postsLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-r from-[var(--color-background)] to-white p-4 lg:p-6 rounded-xl shadow-md border border-gray-100 animate-pulse"
                 >
-                  <div>
-                    <h3 className="font-semibold text-[#2d336b]">
-                      {post.title}
-                    </h3>
-                    <p className="text-[#7886c7] line-clamp-3 pb-2">
-                      {post.content || post.excerpt}
-                    </p>
+                  <div className="flex flex-col space-y-4">
+                    {/* Image Skeleton */}
+                    <div className="w-full h-48 md:h-40 lg:h-48 bg-gray-200 rounded-lg"></div>
+
+                    {/* Content Skeleton */}
+                    <div className="flex-1">
+                      <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                      <div className="space-y-2 mb-4">
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+
+                      {/* Meta Skeleton */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex gap-4">
+                          <div className="h-4 bg-gray-200 rounded w-24"></div>
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="h-8 bg-gray-200 rounded flex-1"></div>
+                          <div className="h-8 bg-gray-200 rounded flex-1"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(post._id)}
-                      className="px-3 py-1 bg-[var(--color-accent)] text-white rounded-md cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post._id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded-md cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <FolderIcon className="h-12 w-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-[#2d336b] mb-2">
+                No articles yet
+              </h3>
+              <p className="text-[#7886c7] mb-4">
+                Start sharing your thoughts with the world!
+              </p>
+              <button
+                onClick={() => setActiveSection("postNews")}
+                className="bg-[var(--color-accent)] text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors"
+              >
+                Create Your First Article
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              {posts.map((post, index) => (
+                <motion.div
+                  key={post._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="group bg-gradient-to-r from-[var(--color-background)] to-white p-4 lg:p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-[var(--color-accent)]/30"
+                >
+                  <div className="flex flex-col space-y-4">
+                    {/* Article Image */}
+                    <div className="w-full h-48 md:h-40 lg:h-48">
+                      {post.imageUrl ? (
+                        <img
+                          src={`${import.meta.env.VITE_API_BASE_URL}${
+                            post.imageUrl
+                          }`}
+                          alt={post.title}
+                          className="w-full h-full object-cover rounded-lg shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-accent)]/20 rounded-lg flex items-center justify-center">
+                          <svg
+                            className="w-12 h-12 text-[var(--color-accent)]/50"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Article Content */}
+                    <div className="flex-1">
+                      <h3 className="text-lg md:text-xl font-bold text-[#2d336b] line-clamp-2 group-hover:text-[var(--color-accent)] transition-colors mb-3">
+                        {post.title}
+                      </h3>
+
+                      <p className="text-[#7886c7] line-clamp-3 mb-4 leading-relaxed text-sm md:text-base">
+                        {post.content ||
+                          post.excerpt ||
+                          "No content available."}
+                      </p>
+
+                      {/* Article Meta */}
+                      <div className="flex flex-col gap-3">
+                        {/* Date and Time Row */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs md:text-sm text-[#7886c7] lg:justify-start">
+                          <span className="flex items-center gap-1">
+                            <svg
+                              className="w-4 h-4 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            {new Date(post.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <svg
+                              className="w-4 h-4 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {new Date(post.createdAt).toLocaleTimeString(
+                              "en-US",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Action Buttons Row */}
+                        <div className="flex gap-2 w-full">
+                          <button
+                            onClick={() => openEditModal(post._id)}
+                            className="flex-1 flex items-center justify-center gap-1 px-3 md:px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105 shadow-sm text-sm"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            <span className="hidden sm:inline">Edit</span>
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(post)}
+                            className="flex-1 flex items-center justify-center gap-1 px-3 md:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 transform hover:scale-105 shadow-sm text-sm"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            <span className="hidden sm:inline">Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           )}
         </motion.div>
 
+        {/* Edit Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 flex justify-center items-center bg-gray-500 bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-200 h-140">
-              <h3 className="text-2xl font-semibold mb-4">Edit Post</h3>
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="mb-4">
-                  <label htmlFor="title" className="block mb-2">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    value={editPost.title}
-                    onChange={(e) =>
-                      setEditPost({ ...editPost, title: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="content" className="block mb-2">
-                    Content
-                  </label>
-                  <textarea
-                    id="content"
-                    value={editPost.content}
-                    onChange={(e) =>
-                      setEditPost({ ...editPost, content: e.target.value })
-                    }
-                    className="w-full h-70 px-4 py-2 border border-gray-300 rounded-md resize-none"
-                    rows="5"
-                  />
-                </div>
-                <div className="flex justify-between gap-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)]/80 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    Edit Article
+                  </h3>
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 bg-[var(--color-text)] text-white rounded-md"
+                    className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEditPost}
-                    className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-md"
-                  >
-                    Save Changes
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
                   </button>
                 </div>
-              </form>
-            </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
+                <form
+                  onSubmit={(e) => e.preventDefault()}
+                  className="space-y-6"
+                >
+                  <div>
+                    <label
+                      htmlFor="edit-title"
+                      className="block text-sm font-semibold mb-2 text-[var(--color-text)]"
+                    >
+                      Article Title
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-title"
+                      value={editPost.title}
+                      onChange={(e) =>
+                        setEditPost({ ...editPost, title: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+                      placeholder="Enter article title..."
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="edit-content"
+                      className="block text-sm font-semibold mb-2 text-[var(--color-text)]"
+                    >
+                      Article Content
+                    </label>
+                    <textarea
+                      id="edit-content"
+                      value={editPost.content}
+                      onChange={(e) =>
+                        setEditPost({ ...editPost, content: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[var(--color-accent)] transition-colors resize-none"
+                      rows="8"
+                      placeholder="Enter article content..."
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="order-2 sm:order-1 px-6 py-2.5 text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditPost}
+                  disabled={editLoading}
+                  className="order-1 sm:order-2 px-6 py-2.5 bg-[var(--color-accent)] text-white rounded-xl hover:bg-opacity-90 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editLoading ? (
+                    <>
+                      <svg
+                        className="w-4 h-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    Delete Article
+                  </h3>
+                  <button
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-8 h-8 text-red-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                    Are you sure?
+                  </h4>
+                  <p className="text-gray-600 mb-4">
+                    You're about to delete "
+                    <span className="font-medium text-gray-900">
+                      {postToDelete?.title}
+                    </span>
+                    ". This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="order-2 sm:order-1 px-6 py-2.5 text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteLoading}
+                  className="order-1 sm:order-2 px-6 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <svg
+                        className="w-4 h-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      Delete Article
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
         {alert.message && (
@@ -654,9 +1118,35 @@ export const UserDashboard = () => {
 
           <button
             type="submit"
-            className="w-full bg-[var(--color-accent)] text-white font-semibold py-3 rounded-lg cursor-pointer"
+            disabled={postLoading}
+            className="w-full bg-[var(--color-accent)] text-white font-semibold py-3 rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Post News
+            {postLoading ? (
+              <>
+                <svg
+                  className="w-5 h-5 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Posting...
+              </>
+            ) : (
+              "Post News"
+            )}
           </button>
         </form>
         {alert.message && (
@@ -719,14 +1209,16 @@ export const UserDashboard = () => {
                 key={item.key}
                 onClick={() => {
                   if (item.key === "logout") {
-                    handleLogout(); // call logout function
+                    setLogoutModalOpen(true); // Show logout confirmation modal
                   } else {
                     setActiveSection(item.key);
                     setIsMobileMenuOpen(false);
                   }
                 }}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition ${
-                  activeSection === item.key
+                  item.key === "logout"
+                    ? "hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-200"
+                    : activeSection === item.key
                     ? "bg-[var(--color-accent)] text-white font-semibold"
                     : "hover:bg-[var(--color-background)] hover:text-[var(--color-text)]"
                 }`}
@@ -743,6 +1235,83 @@ export const UserDashboard = () => {
           {sections[activeSection]}
         </main>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {logoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <ArrowRightOnRectangleIcon className="w-6 h-6" />
+                  Confirm Logout
+                </h3>
+                <button
+                  onClick={() => setLogoutModalOpen(false)}
+                  className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+                  <ArrowRightOnRectangleIcon className="w-8 h-8 text-orange-500" />
+                </div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  Ready to leave?
+                </h4>
+                <p className="text-gray-600 mb-4">
+                  You will be logged out of your account and redirected to the
+                  login page. Any unsaved changes will be lost.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <button
+                onClick={() => setLogoutModalOpen(false)}
+                className="order-2 sm:order-1 px-6 py-2.5 text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              >
+                Stay Logged In
+              </button>
+              <button
+                onClick={() => {
+                  setLogoutModalOpen(false);
+                  handleLogout();
+                }}
+                className="order-1 sm:order-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-medium flex items-center justify-center gap-2"
+              >
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                Yes, Logout
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </>
   );
 };
