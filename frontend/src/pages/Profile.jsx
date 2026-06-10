@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   UserIcon,
   Cog6ToothIcon,
@@ -7,38 +7,50 @@ import {
   ArrowPathIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
+  EnvelopeIcon,
+  PhoneIcon,
+  MapPinIcon,
+  GlobeAltIcon,
+  CloudArrowUpIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  XMarkIcon,
+  PencilIcon,
+  TrashIcon,
+  CalendarIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
-//import UserAvatar from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const menuItems = [
-  {
-    name: "User Information",
-    icon: <UserIcon className="h-5 w-5" />,
-    key: "userInfo",
-  },
-  {
-    name: "Settings",
-    icon: <Cog6ToothIcon className="h-5 w-5" />,
-    key: "settings",
-  },
-  {
-    name: "Posted News",
-    icon: <FolderIcon className="h-5 w-5" />,
-    key: "postedNews",
-  },
-  {
-    name: "Post News",
-    icon: <ArrowPathIcon className="h-5 w-5" />,
-    key: "postNews",
-  },
-  {
-    name: "Logout",
-    icon: <ArrowRightOnRectangleIcon className="h-5 w-5" />,
-    key: "logout",
-  },
-];
+const CopyButton = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-650 hover:bg-slate-50 transition cursor-pointer shrink-0"
+      title="Copy to clipboard"
+    >
+      {copied ? (
+        <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3" />
+        </svg>
+      )}
+    </button>
+  );
+};
 
 export const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState("userInfo");
@@ -51,34 +63,10 @@ export const UserDashboard = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Alert cleanup
-  useEffect(() => {
-    if (alert.message) {
-      const timer = setTimeout(() => {
-        setAlert({ message: "", type: "" });
-      }, 3000); // 3 seconds
+  const avatar = "https://i.pravatar.cc/150?img=1";
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
-      return () => clearTimeout(timer); // Cleanup the timer on component unmount
-    }
-  }, [alert.message]); // Effect runs only when alert.message changes
-
-  const handleLogout = () => {
-    // Remove token or any user data from localStorage
-    localStorage.removeItem("token");
-    // Optionally clear other user info
-    localStorage.removeItem("user");
-
-    // Show success message briefly before redirect
-    setAlert({ message: "Logged out successfully!", type: "success" });
-
-    // Redirect to login page after a short delay
-    setTimeout(() => {
-      navigate("/login");
-    }, 1000);
-  };
-  const avatar = "https://i.pravatar.cc/50?img=1";
-  const username = "John Doe";
-  //For Users
+  // For Users
   const [user, setUser] = useState({
     fullName: "",
     email: "",
@@ -86,15 +74,34 @@ export const UserDashboard = () => {
     address: "",
     country: "",
     bio: "",
-    profileImage: avatar, // default image
+    profileImage: avatar,
   });
+
+  // Alert cleanup
+  useEffect(() => {
+    if (alert.message) {
+      const timer = setTimeout(() => {
+        setAlert({ message: "", type: "" });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [alert.message]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setAlert({ message: "Logged out successfully!", type: "success" });
+    setTimeout(() => {
+      navigate("/login");
+    }, 800);
+  };
+
   // Fetch user info after component mounts
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        console.log("No token found, redirecting to login");
         navigate("/login");
         return;
       }
@@ -107,8 +114,6 @@ export const UserDashboard = () => {
           }
         );
 
-        console.log("Fetched user:", response.data);
-
         setUser({
           fullName: response.data.fullName,
           email: response.data.email,
@@ -117,26 +122,22 @@ export const UserDashboard = () => {
           country: response.data.country,
           bio: response.data.bio || "",
           _id: response.data._id,
+          profileImage: avatar,
         });
       } catch (err) {
-        // Only logout if token is invalid or expired
         if (err.response?.status === 401) {
-          console.warn("Token invalid or expired, logging out");
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           navigate("/login");
         } else {
-          // For other errors, just log
-          console.error(
-            "Failed to fetch user info:",
-            err.response?.data || err
-          );
+          console.error("Failed to fetch user info:", err.response?.data || err);
         }
       }
     };
 
     fetchUser();
-  }, []);
+  }, [navigate]);
+
   // Update User Info
   const [loading, setLoading] = useState(false);
   const handleUpdate = async (e) => {
@@ -161,13 +162,8 @@ export const UserDashboard = () => {
         }
       );
 
-      console.log("Profile updated:", response.data);
-
-      // Update local state with the returned user
       setUser(response.data.user);
-
-      // Optional: show success alert
-      setAlert({ message: response.data.message, type: "success" });
+      setAlert({ message: response.data.message || "Profile updated successfully!", type: "success" });
     } catch (err) {
       console.error("Failed to update profile:", err.response?.data || err);
       setAlert({
@@ -178,10 +174,12 @@ export const UserDashboard = () => {
       setLoading(false);
     }
   };
-  //---- CRUD Operations for Posts ----
+
+  // ---- CRUD Operations for Posts ----
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const currentUserId = user._id;
+
   useEffect(() => {
     const fetchUserPosts = async () => {
       if (!currentUserId) return;
@@ -215,9 +213,8 @@ export const UserDashboard = () => {
         `${import.meta.env.VITE_API_BASE_URL}/api/news/${postToDelete._id}`
       );
 
-      // Remove the post from local state after deleting
       setPosts((prev) => prev.filter((post) => post._id !== postToDelete._id));
-      setAlert({ message: response.data.message, type: "success" });
+      setAlert({ message: response.data.message || "Article deleted successfully", type: "success" });
       setDeleteModalOpen(false);
       setPostToDelete(null);
     } catch (err) {
@@ -231,21 +228,31 @@ export const UserDashboard = () => {
     }
   };
 
-  //For Post News
+  // For Post News
   const [newPost, setNewPost] = useState({
     title: "",
     content: "",
   });
   const [file, setFile] = useState(null);
   const [postLoading, setPostLoading] = useState(false);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setFile(file);
   };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handlePost = async (e) => {
     e.preventDefault();
-
     setPostLoading(true);
+
     try {
       const formData = new FormData();
       formData.append("title", newPost.title);
@@ -263,17 +270,16 @@ export const UserDashboard = () => {
         }
       );
 
-      setAlert({ message: response.data.message, type: "success" });
+      setAlert({ message: response.data.message || "News article published successfully!", type: "success" });
       setNewPost({ title: "", content: "" });
       setFile(null);
 
-      // Refresh the posts list if user is currently viewing posted news
-      if (activeSection === "postedNews") {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
-        );
-        setPosts(res.data);
-      }
+      // Refresh the posts list
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
+      );
+      setPosts(res.data);
+      setActiveSection("postedNews");
     } catch (err) {
       setAlert({
         message: err.response?.data?.message || "Failed to post news",
@@ -283,7 +289,8 @@ export const UserDashboard = () => {
       setPostLoading(false);
     }
   };
-  //-----------Edit Post-------------------
+
+  // ----------- Edit Post -------------------
   const [editPost, setEditPost] = useState({
     title: "",
     content: "",
@@ -297,14 +304,15 @@ export const UserDashboard = () => {
       setEditPost({
         ...postToEdit,
       });
+      setIsModalOpen(true);
     }
-    setIsModalOpen(true); // Open modal
   };
+
   const handleEditPost = async () => {
     setEditLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/api/news/${editPost._id}`,
         {
           title: editPost.title,
@@ -318,10 +326,10 @@ export const UserDashboard = () => {
       const res = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/news/user/${currentUserId}`
       );
-      setPosts(res.data); // Re-set posts from the server
+      setPosts(res.data);
 
-      setIsModalOpen(false); // Close the modal
-      setAlert({ message: "Post updated successfully", type: "success" });
+      setIsModalOpen(false);
+      setAlert({ message: "Article updated successfully!", type: "success" });
     } catch (err) {
       setAlert({
         message: err.response?.data?.message || "Failed to update post",
@@ -332,48 +340,227 @@ export const UserDashboard = () => {
     }
   };
 
+  const menuItems = [
+    {
+      name: "Dashboard Info",
+      icon: <UserIcon className="h-5 w-5" />,
+      key: "userInfo",
+    },
+    {
+      name: "Edit Profile",
+      icon: <Cog6ToothIcon className="h-5 w-5" />,
+      key: "settings",
+    },
+    {
+      name: "Published News",
+      icon: <FolderIcon className="h-5 w-5" />,
+      key: "postedNews",
+    },
+    {
+      name: "Publish News",
+      icon: <ArrowPathIcon className="h-5 w-5" />,
+      key: "postNews",
+    },
+    {
+      name: "Logout",
+      icon: <ArrowRightOnRectangleIcon className="h-5 w-5 text-rose-500" />,
+      key: "logout",
+    },
+  ];
+
   const sections = {
     userInfo: (
       <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white p-6 rounded-2xl shadow-xl"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="space-y-6 text-left"
       >
-        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 text-left">
+        {/* Banner */}
+        <div className="bg-gradient-to-br from-slate-900 via-zinc-900 to-amber-950 rounded-3xl h-44 relative overflow-hidden shadow-lg border border-slate-800">
+          <div className="absolute top-[-20%] right-[-10%] w-72 h-72 bg-[var(--color-accent)] opacity-15 rounded-full blur-3xl" />
+          <div className="absolute bottom-[-20%] left-[20%] w-72 h-72 bg-amber-500 opacity-10 rounded-full blur-3xl" />
+        </div>
+
+        {/* Breakout Info Header (Using flow layout & negative margin) */}
+        <div className="px-8 flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-12 mb-6">
           <img
-            src={user.profileImage || avatar} // fallback to default avatar
-            alt="User Avatar"
-            className="w-20 h-20 rounded-full border-4 border-[#a9b5df] shadow-lg object-cover"
+            src={user.profileImage || avatar}
+            alt="Avatar"
+            className="w-24 h-24 rounded-2xl border-4 border-white object-cover shadow-xl bg-slate-50 z-10 shrink-0"
           />
-          <div className="flex-1 space-y-2">
-            <p className="text-[#ec4d4d] text-3xl font-medium">
-              {user.fullName || "User"} {/* display actual full name */}
+          <div className="text-center sm:text-left pb-1">
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <h2 className="text-2xl font-black text-slate-900">
+                {user.fullName || "Journalist Name"}
+              </h2>
+              <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-[var(--color-accent)] ring-1 ring-inset ring-amber-500/20">
+                Contributor
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">
+              Verified News Publisher
             </p>
-            <p className="text-gray-600 leading-relaxed">
-              {user.bio ||
-                "I build secure and decentralized solutions for protecting intellectual property. My mission is to empower creators through robust blockchain verification and seamless licensing processes."}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 mt-6 gap-y-4 text-sm text-[#2d336b]">
-              <div>
-                <span className="font-semibold">Full Name:</span>{" "}
-                {user.fullName || "-"}
+          </div>
+        </div>
+
+        {/* Asymmetric Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Biography & Recent Activity (2/3 width) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Biography Card */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden text-left">
+              {/* Decorative background quotation mark */}
+              <span className="absolute top-2 right-6 text-8xl font-serif text-slate-100/85 font-black select-none pointer-events-none">
+                “
+              </span>
+              <div className="relative z-10 space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Biography</h3>
+                <p className="text-slate-700 text-sm leading-relaxed font-medium">
+                  {user.bio || "No biography provided yet. Head over to Edit Profile to share details about your background, publications, and interests."}
+                </p>
               </div>
-              <div>
-                <span className="font-semibold">Email:</span>{" "}
-                {user.email || "-"}
+            </div>
+
+            {/* Recent Publications Feed Preview */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Recent Publications</h3>
+                <button
+                  onClick={() => setActiveSection("postedNews")}
+                  className="text-xs font-bold text-[var(--color-accent)] hover:text-amber-700 transition cursor-pointer"
+                >
+                  View All
+                </button>
               </div>
-              <div>
-                <span className="font-semibold">Phone:</span>{" "}
-                {user.phone || "-"}
+
+              {postsLoading ? (
+                <div className="space-y-3">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="h-14 bg-slate-50 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-400 font-bold">No articles published yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {posts.slice(0, 3).map((post) => (
+                    <div
+                      key={post._id}
+                      onClick={() => setActiveSection("postedNews")}
+                      className="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 rounded-xl border border-slate-100/80 cursor-pointer transition duration-150 group"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="h-10 w-10 bg-slate-200 rounded-lg overflow-hidden shrink-0">
+                          {post.imageUrl ? (
+                            <img
+                              src={`${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`}
+                              alt={post.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-amber-500/10 flex items-center justify-center text-[var(--color-accent)]">
+                              <FolderIcon className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-[var(--color-accent)] transition">
+                            {post.title}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            {new Date(post.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">
+                        Live
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Contact Credentials & Stats (1/3 width) */}
+          <div className="space-y-6">
+            {/* Publisher Metadata Card */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+              <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Directory Metadata</h3>
+              
+              <div className="space-y-4 text-slate-755">
+                {/* Email Item */}
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 bg-amber-500/10 text-[var(--color-accent)] rounded-lg shrink-0">
+                    <EnvelopeIcon className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="min-w-0 text-left flex-grow">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Email Address</p>
+                    <p className="text-xs font-bold text-slate-800 break-all mt-0.5">{user.email || "-"}</p>
+                  </div>
+                  {user.email && (
+                    <CopyButton text={user.email} />
+                  )}
+                </div>
+
+                {/* Phone Number Item */}
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 bg-amber-500/10 text-[var(--color-accent)] rounded-lg shrink-0">
+                    <PhoneIcon className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="min-w-0 text-left flex-grow">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Phone Number</p>
+                    <p className="text-xs font-bold text-slate-800 break-all mt-0.5">{user.phone || "-"}</p>
+                  </div>
+                  {user.phone && (
+                    <CopyButton text={user.phone} />
+                  )}
+                </div>
+
+                {/* Country Item */}
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 bg-amber-500/10 text-[var(--color-accent)] rounded-lg shrink-0">
+                    <GlobeAltIcon className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="min-w-0 text-left flex-grow">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Country Location</p>
+                    <p className="text-xs font-bold text-slate-800 break-words mt-0.5">{user.country || "-"}</p>
+                  </div>
+                </div>
+
+                {/* Street Address Item */}
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 bg-amber-500/10 text-[var(--color-accent)] rounded-lg shrink-0">
+                    <MapPinIcon className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="min-w-0 text-left flex-grow">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Street Address</p>
+                    <p className="text-xs font-bold text-slate-800 break-words mt-0.5">{user.address || "-"}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Address:</span>{" "}
-                {user.address || "-"}
+            </div>
+
+            {/* Quick stats board */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Stat 1 */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-left">
+                <div className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Total Articles</div>
+                <div className="text-2xl font-black text-slate-900 mt-1">{posts.length}</div>
               </div>
-              <div>
-                <span className="font-semibold">Country:</span>{" "}
-                {user.country || "-"}
+              {/* Stat 2 */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-left flex flex-col justify-between">
+                <div className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Console Status</div>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-xs font-bold text-slate-700">Active</span>
+                </div>
               </div>
             </div>
           </div>
@@ -382,362 +569,307 @@ export const UserDashboard = () => {
     ),
     settings: (
       <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white p-6 rounded-2xl shadow-xl"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-8 text-left"
       >
-        <h2 className="text-2xl font-bold mb-4 text-[var(--color-accent)]">
-          Edit Profile
-        </h2>
-        <div className="flex items-center mb-6 gap-6">
-          <img
-            src={user.profileImage || avatar}
-            alt="User Avatar"
-            className="w-20 h-20 rounded-full object-cover border-2 border-[#a9b5df]"
-          />
-          <div>
-            <label className="block mb-1 text-sm text-left font-semibold text-[var(--color-text)]">
-              Change Avatar
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="text-sm text-[var(--color-accent)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-white file:bg-[var(--color-accent)]"
+        <div>
+          <h2 className="text-2xl font-black text-slate-900">Edit Profile</h2>
+          <p className="text-sm text-slate-500">Update your account credentials, bio details, and address records.</p>
+        </div>
+
+        {/* Change Avatar widget */}
+        <div className="flex flex-col sm:flex-row items-center gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+          <div className="relative group rounded-2xl overflow-hidden w-20 h-20 border-2 border-white shadow-md bg-white shrink-0">
+            <img
+              src={avatarPreview || user.profileImage || avatar}
+              alt="Avatar"
+              className="w-full h-full object-cover"
             />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
+              <CloudArrowUpIcon className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <div className="flex-grow space-y-1 text-center sm:text-left">
+            <label className="block text-sm font-bold text-slate-800">
+              Profile Photo
+            </label>
+            <p className="text-xs text-slate-500">Choose a high-resolution photo so readers recognize you.</p>
+            <div className="relative inline-block mt-2">
+              <input
+                type="file"
+                id="avatar"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="sr-only"
+              />
+              <label
+                htmlFor="avatar"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-700 border border-slate-200 cursor-pointer shadow-sm hover:bg-slate-50 transition duration-150"
+              >
+                Choose file
+              </label>
+            </div>
           </div>
         </div>
 
-        <form
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[var(--color-text)]"
-          onSubmit={handleUpdate}
-        >
-          <div>
-            <label
-              className="block text-sm font-semibold mb-1"
-              htmlFor="fullName"
-            >
+        {/* Settings Form */}
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-800" onSubmit={handleUpdate}>
+          {/* Full Name */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="fullName">
               Full Name
             </label>
-            <input
-              id="fullName"
-              type="text"
-              placeholder="John Doe"
-              value={user.fullName}
-              onChange={(e) => setUser({ ...user, fullName: e.target.value })}
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            />
+            <div className="relative rounded-xl shadow-sm">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <UserIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+              </div>
+              <input
+                id="fullName"
+                type="text"
+                value={user.fullName}
+                onChange={(e) => setUser({ ...user, fullName: e.target.value })}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="email">
-              Email
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="email">
+              Email Address
             </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="john@example.com"
-              value={user.email}
-              onChange={(e) => setUser({ ...user, email: e.target.value })}
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            />
+            <div className="relative rounded-xl shadow-sm">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <EnvelopeIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+              </div>
+              <input
+                id="email"
+                type="email"
+                value={user.email}
+                onChange={(e) => setUser({ ...user, email: e.target.value })}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="phone">
-              Phone
+          {/* Phone */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="phone">
+              Phone Number
             </label>
-            <input
-              id="phone"
-              type="tel"
-              placeholder="+1234567890"
-              value={user.phone}
-              onChange={(e) => setUser({ ...user, phone: e.target.value })}
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            />
+            <div className="relative rounded-xl shadow-sm">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <PhoneIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+              </div>
+              <input
+                id="phone"
+                type="tel"
+                value={user.phone}
+                onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              className="block text-sm font-semibold mb-1"
-              htmlFor="country"
-            >
+          {/* Country */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="country">
               Country
             </label>
-            <input
-              id="country"
-              type="text"
-              placeholder="United States"
-              value={user.country}
-              onChange={(e) => setUser({ ...user, country: e.target.value })}
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            />
+            <div className="relative rounded-xl shadow-sm">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <GlobeAltIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+              </div>
+              <input
+                id="country"
+                type="text"
+                value={user.country}
+                onChange={(e) => setUser({ ...user, country: e.target.value })}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+              />
+            </div>
           </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-semibold mb-1" htmlFor="bio">
-              Address
+
+          {/* Address */}
+          <div className="md:col-span-2 space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="address">
+              Street Address
             </label>
-            <input
-              id="bio"
-              rows={4}
-              placeholder="Tell us something about yourself..."
-              value={user.address}
-              onChange={(e) => setUser({ ...user, address: e.target.value })}
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            ></input>
+            <div className="relative rounded-xl shadow-sm">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <MapPinIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+              </div>
+              <input
+                id="address"
+                type="text"
+                value={user.address}
+                onChange={(e) => setUser({ ...user, address: e.target.value })}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+              />
+            </div>
           </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-semibold mb-1" htmlFor="bio">
+
+          {/* Bio */}
+          <div className="md:col-span-2 space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="bio">
               Bio / Description
             </label>
             <textarea
               id="bio"
               rows={4}
-              placeholder="Tell us something about yourself..."
               value={user.bio}
               onChange={(e) => setUser({ ...user, bio: e.target.value })}
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            ></textarea>
+              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200 resize-none"
+              placeholder="Tell readers about yourself..."
+            />
           </div>
 
-          <div className="md:col-span-2">
+          {/* Submit */}
+          <div className="md:col-span-2 pt-2">
             <button
               type="submit"
-              className="w-full bg-[var(--color-accent)] text-white font-semibold py-3 rounded-lg cursor-pointer"
+              className="w-full rounded-xl bg-[var(--color-accent)] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-600/15 hover:shadow-amber-600/25 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               disabled={loading}
             >
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>Saving changes...</span>
+                </>
+              ) : (
+                <span>Save Profile Changes</span>
+              )}
             </button>
           </div>
         </form>
-        {alert.message && (
-          <div
-            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
-              alert.type === "success" ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            {alert.message}
-          </div>
-        )}
       </motion.div>
     ),
     postedNews: (
-      <>
+      <div className="text-left space-y-6">
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white p-6 rounded-2xl shadow-xl"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h2 className="text-xl md:text-2xl font-bold text-[#2d336b] flex items-center gap-2">
-              <FolderIcon className="h-5 w-5 md:h-6 md:w-6 text-[var(--color-accent)] flex-shrink-0" />
-              <span className="break-words">My Published Articles</span>
-            </h2>
-            <div className="text-xs md:text-sm text-[#7886c7] bg-[var(--color-background)] px-3 py-1 rounded-full self-start sm:self-auto whitespace-nowrap">
-              {posts.length} {posts.length === 1 ? "Article" : "Articles"}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                Published Articles
+              </h2>
+              <p className="text-sm text-slate-500">Edit, remove, or monitor your existing publisher feeds.</p>
+            </div>
+            <div className="text-xs font-bold text-[var(--color-accent)] bg-amber-500/10 px-3.5 py-1.5 rounded-xl self-start sm:self-auto">
+              {posts.length} {posts.length === 1 ? "Article" : "Articles"} Published
             </div>
           </div>
 
           {postsLoading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, index) => (
                 <div
                   key={index}
-                  className="bg-gradient-to-r from-[var(--color-background)] to-white p-4 lg:p-6 rounded-xl shadow-md border border-gray-100 animate-pulse"
+                  className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 shadow-sm animate-pulse space-y-4"
                 >
-                  <div className="flex flex-col space-y-4">
-                    {/* Image Skeleton */}
-                    <div className="w-full h-48 md:h-40 lg:h-48 bg-gray-200 rounded-lg"></div>
-
-                    {/* Content Skeleton */}
-                    <div className="flex-1">
-                      <div className="h-6 bg-gray-200 rounded mb-3"></div>
-                      <div className="space-y-2 mb-4">
-                        <div className="h-4 bg-gray-200 rounded"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      </div>
-
-                      {/* Meta Skeleton */}
-                      <div className="flex flex-col gap-3">
-                        <div className="flex gap-4">
-                          <div className="h-4 bg-gray-200 rounded w-24"></div>
-                          <div className="h-4 bg-gray-200 rounded w-16"></div>
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="h-8 bg-gray-200 rounded flex-1"></div>
-                          <div className="h-8 bg-gray-200 rounded flex-1"></div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="w-full h-44 bg-slate-200 rounded-xl"></div>
+                  <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-slate-200 rounded"></div>
+                    <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <div className="h-9 bg-slate-200 rounded-lg flex-1"></div>
+                    <div className="h-9 bg-slate-200 rounded-lg flex-1"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <FolderIcon className="h-12 w-12 text-gray-400" />
+            <div className="text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-4 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100">
+                <FolderIcon className="h-10 w-10 text-slate-400" />
               </div>
-              <h3 className="text-lg font-medium text-[#2d336b] mb-2">
-                No articles yet
-              </h3>
-              <p className="text-[#7886c7] mb-4">
-                Start sharing your thoughts with the world!
-              </p>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">No articles published yet</h3>
+              <p className="text-sm text-slate-500 mb-6">Start sharing verified news stories with the world.</p>
               <button
                 onClick={() => setActiveSection("postNews")}
-                className="bg-[var(--color-accent)] text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-accent)] text-white text-xs font-bold px-4 py-2.5 hover:opacity-90 active:scale-[0.98] shadow-md shadow-amber-600/10 transition cursor-pointer"
               >
-                Create Your First Article
+                Create First Article
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {posts.map((post, index) => (
                 <motion.div
                   key={post._id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="group bg-gradient-to-r from-[var(--color-background)] to-white p-4 lg:p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-[var(--color-accent)]/30"
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="group bg-slate-50/50 hover:bg-white p-5 rounded-2xl border border-slate-100 hover:border-amber-500/20 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="flex flex-col space-y-4">
-                    {/* Article Image */}
-                    <div className="w-full h-48 md:h-40 lg:h-48">
+                  <div className="space-y-4">
+                    {/* Image block */}
+                    <div className="w-full h-44 rounded-xl overflow-hidden bg-slate-200 relative">
                       {post.imageUrl ? (
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL}${
-                            post.imageUrl
-                          }`}
+                          src={`${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`}
                           alt={post.title}
-                          className="w-full h-full object-cover rounded-lg shadow-sm"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-accent)]/20 rounded-lg flex items-center justify-center">
-                          <svg
-                            className="w-12 h-12 text-[var(--color-accent)]/50"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                            />
+                        <div className="w-full h-full bg-gradient-to-br from-amber-500/10 to-amber-500/20 flex items-center justify-center">
+                          <svg className="w-10 h-10 text-[var(--color-accent)]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                           </svg>
                         </div>
                       )}
                     </div>
 
-                    {/* Article Content */}
-                    <div className="flex-1">
-                      <h3 className="text-lg md:text-xl font-bold text-[#2d336b] line-clamp-2 group-hover:text-[var(--color-accent)] transition-colors mb-3">
+                    {/* Content */}
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-bold text-slate-800 group-hover:text-[var(--color-accent)] transition-colors line-clamp-2">
                         {post.title}
                       </h3>
-
-                      <p className="text-[#7886c7] line-clamp-3 mb-4 leading-relaxed text-sm md:text-base">
-                        {post.content ||
-                          post.excerpt ||
-                          "No content available."}
+                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                        {post.content || post.excerpt || "No summary text available."}
                       </p>
+                    </div>
+                  </div>
 
-                      {/* Article Meta */}
-                      <div className="flex flex-col gap-3">
-                        {/* Date and Time Row */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs md:text-sm text-[#7886c7] lg:justify-start">
-                          <span className="flex items-center gap-1">
-                            <svg
-                              className="w-4 h-4 flex-shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                            {new Date(post.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg
-                              className="w-4 h-4 flex-shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {new Date(post.createdAt).toLocaleTimeString(
-                              "en-US",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </span>
-                        </div>
+                  {/* Metadata & Actions row */}
+                  <div className="space-y-4 mt-5 pt-4 border-t border-slate-100">
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 font-bold uppercase tracking-wide">
+                      <span className="flex items-center gap-1">
+                        <CalendarIcon className="h-4 w-4" />
+                        {new Date(post.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <ClockIcon className="h-4 w-4" />
+                        {new Date(post.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
 
-                        {/* Action Buttons Row */}
-                        <div className="flex gap-2 w-full">
-                          <button
-                            onClick={() => openEditModal(post._id)}
-                            className="flex-1 flex items-center justify-center gap-1 px-3 md:px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105 shadow-sm text-sm"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                            <span className="hidden sm:inline">Edit</span>
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(post)}
-                            className="flex-1 flex items-center justify-center gap-1 px-3 md:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 transform hover:scale-105 shadow-sm text-sm"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                            <span className="hidden sm:inline">Delete</span>
-                          </button>
-                        </div>
-                      </div>
+                    <div className="flex gap-2.5">
+                      <button
+                        onClick={() => openEditModal(post._id)}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-100 hover:bg-amber-500/10 text-slate-700 hover:text-[var(--color-accent)] border border-slate-200 hover:border-amber-500/20 py-2 text-xs font-bold transition duration-200 cursor-pointer shadow-sm"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(post)}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 hover:border-rose-200 py-2 text-xs font-bold transition duration-200 cursor-pointer shadow-sm"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -746,418 +878,265 @@ export const UserDashboard = () => {
           )}
         </motion.div>
 
-        {/* Edit Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)]/80 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Edit Article
+        {/* Edit Article Modal */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col justify-between border border-slate-100"
+              >
+                {/* Modal Header */}
+                <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+                  <h3 className="text-lg font-black text-slate-950 flex items-center gap-2">
+                    <PencilIcon className="h-5 w-5 text-[var(--color-accent)]" />
+                    <span>Edit Published Article</span>
                   </h3>
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                    className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition cursor-pointer"
                   >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <XMarkIcon className="h-5 w-5" />
                   </button>
                 </div>
-              </div>
 
-              {/* Modal Body */}
-              <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
-                <form
-                  onSubmit={(e) => e.preventDefault()}
-                  className="space-y-6"
-                >
-                  <div>
-                    <label
-                      htmlFor="edit-title"
-                      className="block text-sm font-semibold mb-2 text-[var(--color-text)]"
-                    >
+                {/* Modal Body */}
+                <div className="p-6 overflow-y-auto space-y-5">
+                  <div className="space-y-1.5">
+                    <label htmlFor="edit-title" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                       Article Title
                     </label>
                     <input
                       type="text"
                       id="edit-title"
                       value={editPost.title}
-                      onChange={(e) =>
-                        setEditPost({ ...editPost, title: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[var(--color-accent)] transition-colors"
-                      placeholder="Enter article title..."
+                      onChange={(e) => setEditPost({ ...editPost, title: e.target.value })}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+                      placeholder="Title of news post..."
                     />
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="edit-content"
-                      className="block text-sm font-semibold mb-2 text-[var(--color-text)]"
-                    >
+                  <div className="space-y-1.5">
+                    <label htmlFor="edit-content" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                       Article Content
                     </label>
                     <textarea
                       id="edit-content"
                       value={editPost.content}
-                      onChange={(e) =>
-                        setEditPost({ ...editPost, content: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[var(--color-accent)] transition-colors resize-none"
-                      rows="8"
-                      placeholder="Enter article content..."
+                      onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
+                      className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200 resize-none"
+                      rows="10"
+                      placeholder="Full editorial report text..."
                     />
                   </div>
-                </form>
-              </div>
+                </div>
 
-              {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="order-2 sm:order-1 px-6 py-2.5 text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEditPost}
-                  disabled={editLoading}
-                  className="order-1 sm:order-2 px-6 py-2.5 bg-[var(--color-accent)] text-white rounded-xl hover:bg-opacity-90 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {editLoading ? (
-                    <>
-                      <svg
-                        className="w-4 h-4 animate-spin"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {deleteModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                      />
-                    </svg>
-                    Delete Article
-                  </h3>
+                {/* Modal Footer */}
+                <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex flex-col sm:flex-row gap-2.5 sm:justify-end">
                   <button
-                    onClick={() => setDeleteModalOpen(false)}
-                    className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                    onClick={() => setIsModalOpen(false)}
+                    className="order-2 sm:order-1 px-4 py-2.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-800 transition cursor-pointer"
                   >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    Discard Changes
+                  </button>
+                  <button
+                    onClick={handleEditPost}
+                    disabled={editLoading}
+                    className="order-1 sm:order-2 px-5 py-2.5 bg-[var(--color-accent)] text-white text-xs font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {editLoading ? (
+                      <>
+                        <svg className="animate-spin h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="h-4.5 w-4.5" />
+                        <span>Save Article Details</span>
+                      </>
+                    )}
                   </button>
                 </div>
-              </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
-              {/* Modal Body */}
-              <div className="p-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-red-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+        {/* Delete Confirmation Modal */}
+        <AnimatePresence>
+          {deleteModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 text-center"
+              >
+                {/* Body */}
+                <div className="p-6">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-rose-50 rounded-2xl flex items-center justify-center border border-rose-100">
+                    <TrashIcon className="h-8 w-8 text-rose-600" />
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h4 className="text-lg font-extrabold text-slate-950 mb-2">
                     Are you sure?
                   </h4>
-                  <p className="text-gray-600 mb-4">
-                    You're about to delete "
-                    <span className="font-medium text-gray-900">
-                      {postToDelete?.title}
-                    </span>
-                    ". This action cannot be undone.
+                  <p className="text-sm text-slate-500 leading-relaxed px-2">
+                    You're about to delete <span className="font-bold text-slate-800">"{postToDelete?.title}"</span>. This action cannot be undone.
                   </p>
                 </div>
-              </div>
 
-              {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
-                <button
-                  onClick={() => setDeleteModalOpen(false)}
-                  className="order-2 sm:order-1 px-6 py-2.5 text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleteLoading}
-                  className="order-1 sm:order-2 px-6 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {deleteLoading ? (
-                    <>
-                      <svg
-                        className="w-4 h-4 animate-spin"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                      Delete Article
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-        {alert.message && (
-          <div
-            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
-              alert.type === "success" ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            {alert.message}
-          </div>
-        )}
-      </>
+                {/* Footer */}
+                <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex flex-col sm:flex-row gap-2.5 sm:justify-end">
+                  <button
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="order-2 sm:order-1 px-4 py-2.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    Keep Article
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteLoading}
+                    className="order-1 sm:order-2 px-5 py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {deleteLoading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <span>Yes, Delete Article</span>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
     ),
     postNews: (
       <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white p-6 rounded-2xl shadow-xl"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-6 text-left"
       >
-        <h2 className="text-2xl font-bold mb-4 text-[var(--color-text)]">
-          Post News
-        </h2>
-        <form onSubmit={handlePost} className="space-y-4">
-          <div>
-            <label
-              className="block text-sm font-semibold mb-1 text-left"
-              htmlFor="title"
-            >
-              Title
+        <div>
+          <h2 className="text-2xl font-black text-slate-900">Publish News</h2>
+          <p className="text-sm text-slate-500">Draft a new story report, attach media, and broadcast instantly to the feed directory.</p>
+        </div>
+
+        <form onSubmit={handlePost} className="space-y-6">
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="title">
+              Article Title
             </label>
             <input
               id="title"
               type="text"
-              placeholder="Enter news title"
+              placeholder="Enter news headline..."
               value={newPost.title}
-              onChange={(e) =>
-                setNewPost({ ...newPost, title: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+              required
             />
           </div>
 
-          <div>
-            <label
-              className="block text-sm font-semibold mb-1 text-left"
-              htmlFor="content"
-            >
-              Content
+          {/* Content */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide" htmlFor="content">
+              Content Body
             </label>
             <textarea
               id="content"
-              placeholder="Enter news content"
+              placeholder="Start drafting your article details..."
               value={newPost.content}
-              onChange={(e) =>
-                setNewPost({ ...newPost, content: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-[var(--color-accent)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            ></textarea>
+              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200 resize-none"
+              rows={8}
+              required
+            />
           </div>
 
-          <div>
-            <label
-              className="block text-sm font-semibold mb-1 text-left"
-              htmlFor="image"
-            >
-              Image
+          {/* CMS Drag and Drop zone */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+              Article Thumbnail Image
             </label>
-            <input
-              id="image"
-              type="file"
-              onChange={handleFileChange}
-              className="w-full mt-2 p-2 border border-[var(--color-accent)] rounded-lg  file:text-white file:py-1 file:px-4 file:rounded-lg file:bg-[var(--color-accent)]"
-            />
+            <div className="mt-2 flex justify-center rounded-2xl border-2 border-dashed border-slate-200 hover:border-amber-500/50 bg-slate-50/50 hover:bg-white px-6 py-8 transition duration-200">
+              <div className="text-center space-y-2.5">
+                {file ? (
+                  <div className="space-y-3">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      <CheckCircleIcon className="h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-800">{file.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => setFile(null)}
+                      className="text-xs font-bold text-rose-500 hover:text-rose-600 cursor-pointer"
+                    >
+                      Remove file
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-[var(--color-accent)]">
+                      <CloudArrowUpIcon className="h-6 w-6" aria-hidden="true" />
+                    </div>
+                    <div className="flex text-sm text-slate-500 font-medium justify-center">
+                      <label
+                        htmlFor="file-upload"
+                        className="relative cursor-pointer rounded-md font-bold text-[var(--color-accent)] hover:text-amber-700 focus-within:outline-none"
+                      >
+                        <span>Upload a file</span>
+                        <input
+                          id="file-upload"
+                          name="image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="sr-only"
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-slate-400 font-bold">PNG, JPG, GIF up to 5MB</p>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={postLoading}
-            className="w-full bg-[var(--color-accent)] text-white font-semibold py-3 rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full rounded-xl bg-[var(--color-accent)] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-600/15 hover:shadow-amber-600/25 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {postLoading ? (
               <>
-                <svg
-                  className="w-5 h-5 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
+                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Posting...
+                <span>Publishing article...</span>
               </>
             ) : (
-              "Post News"
+              <span>Publish Article Now</span>
             )}
           </button>
         </form>
-        {alert.message && (
-          <div
-            className={`fixed right-5 top-25 p-4 rounded-lg text-white shadow-md ${
-              alert.type === "success" ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            {alert.message}
-          </div>
-        )}
       </motion.div>
     ),
     logout: (
@@ -1165,12 +1144,13 @@ export const UserDashboard = () => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
+        className="text-center py-16"
       >
-        <h2 className="text-2xl font-bold mb-4 text-center text-[#2d336b]">
-          You have been logged out.
+        <h2 className="text-2xl font-black mb-2 text-slate-900">
+          Logging out...
         </h2>
-        <p className="text-center text-[#7886c7]">
-          Redirecting to login page...
+        <p className="text-sm text-slate-500 font-medium">
+          You are being logged out of your active contributor workspace session.
         </p>
       </motion.div>
     ),
@@ -1178,140 +1158,172 @@ export const UserDashboard = () => {
 
   return (
     <>
-      <div className="mt-16"></div>
-      <div className="flex flex-col lg:flex-row min-h-screen bg-[#f9faff]">
-        {/* Sidebar */}
-        <div className="bg-[var(--color-background)] text-[var(--color-text)] lg:w-64 p-4 relative rounded-lg lg:rounded-r-none lg:rounded-tl-3xl">
-          <div className="flex items-center justify-between mb-4 px-2">
-            <div className="flex items-center gap-3">
-              <img
-                src={avatar}
-                alt="Avatar"
-                className="w-10 h-10 rounded-full border-2 border-white object-cover"
-              />
-              <p className="text-sm font-medium">{user.fullName}</p>
-            </div>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden text-[var(--color-accent)] focus:outline-none hover:bg-[#7886c7] p-2 rounded-lg"
+      {/* Toast Notification Container */}
+      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 max-w-sm w-full">
+        <AnimatePresence>
+          {alert.message && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, x: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+              className={`flex items-start gap-3 p-4 rounded-xl shadow-xl border text-left ${
+                alert.type === "success"
+                  ? "bg-emerald-50 border-emerald-100 shadow-emerald-500/5"
+                  : "bg-rose-50 border-rose-100 shadow-rose-500/5"
+              }`}
             >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
+              <div className="flex-shrink-0 mt-0.5">
+                {alert.type === "success" ? (
+                  <CheckCircleIcon className="h-5.5 w-5.5 text-emerald-600" />
+                ) : (
+                  <ExclamationCircleIcon className="h-5.5 w-5.5 text-rose-600" />
+                )}
+              </div>
+              <div className="flex-grow space-y-1">
+                <p className="text-sm font-bold text-slate-900">
+                  {alert.type === "success" ? "Success" : "Error Occurred"}
+                </p>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {alert.message}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAlert({ message: "", type: "" })}
+                className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+              >
+                <span className="sr-only">Dismiss</span>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex flex-col lg:flex-row min-h-screen bg-[#f8fafc] mt-4 rounded-2xl overflow-hidden border border-slate-100">
+        {/* Sidebar */}
+        <aside className="bg-white text-slate-800 lg:w-64 p-6 relative shrink-0 border-r border-slate-100 flex flex-col justify-between">
+          <div>
+            {/* Contributor badge & avatar header */}
+            <div className="flex items-center gap-3.5 mb-8 pb-6 border-b border-slate-100 text-left">
+              <div className="relative">
+                <img
+                  src={user.profileImage || avatar}
+                  alt="Avatar"
+                  className="w-11 h-11 rounded-2xl object-cover border-2 border-slate-50 shadow-sm bg-slate-50"
+                />
+                <div className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+              </div>
+              <div className="truncate">
+                <p className="text-sm font-bold text-slate-900 truncate">{user.fullName || "Journalist Name"}</p>
+                <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-[var(--color-accent)] font-bold text-[10px] tracking-wider uppercase mt-0.5">
+                  Contributor
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile menu trigger */}
+            <div className="flex lg:hidden justify-between items-center mb-6">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Workspace Menu</span>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-slate-600 hover:text-slate-900 hover:bg-slate-50 p-2 rounded-xl border border-slate-150 transition cursor-pointer"
+              >
+                <Bars3Icon className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Menu Items */}
+            <ul className={`space-y-1.5 ${isMobileMenuOpen ? "block" : "hidden"} lg:block text-left`}>
+              {menuItems.map((item) => {
+                const isItemActive = activeSection === item.key;
+                return (
+                  <li
+                    key={item.key}
+                    onClick={() => {
+                      if (item.key === "logout") {
+                        setLogoutModalOpen(true);
+                      } else {
+                        setActiveSection(item.key);
+                        setIsMobileMenuOpen(false);
+                      }
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-bold transition duration-150 select-none
+                      ${
+                        item.key === "logout"
+                          ? "hover:bg-rose-50 text-slate-600 hover:text-rose-600"
+                          : isItemActive
+                          ? "bg-amber-500/10 text-[var(--color-accent)] shadow-sm shadow-amber-500/5"
+                          : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
+                      }`}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
-          <ul
-            className={`space-y-2 mt-6 ${
-              isMobileMenuOpen ? "block" : "hidden"
-            } lg:block`}
-          >
-            {menuItems.map((item) => (
-              <li
-                key={item.key}
-                onClick={() => {
-                  if (item.key === "logout") {
-                    setLogoutModalOpen(true); // Show logout confirmation modal
-                  } else {
-                    setActiveSection(item.key);
-                    setIsMobileMenuOpen(false);
-                  }
-                }}
-                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition ${
-                  item.key === "logout"
-                    ? "hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-200"
-                    : activeSection === item.key
-                    ? "bg-[var(--color-accent)] text-white font-semibold"
-                    : "hover:bg-[var(--color-background)] hover:text-[var(--color-text)]"
-                }`}
-              >
-                {item.icon}
-                <span className="sm:inline">{item.name}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <div className="hidden lg:block pt-6 border-t border-slate-50 text-[10px] text-slate-400 font-bold tracking-widest uppercase text-left">
+            Workspace Console
+          </div>
+        </aside>
 
-        {/* Main Panel */}
-        <main className="flex-1 p-6 overflow-y-auto bg-white rounded-tl-3xl">
+        {/* Main Content Area */}
+        <main className="flex-grow p-8 lg:p-12 overflow-y-auto bg-slate-50/50">
           {sections[activeSection]}
         </main>
       </div>
 
       {/* Logout Confirmation Modal */}
-      {logoutModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-          >
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <ArrowRightOnRectangleIcon className="w-6 h-6" />
-                  Confirm Logout
-                </h3>
-                <button
-                  onClick={() => setLogoutModalOpen(false)}
-                  className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
-                  <ArrowRightOnRectangleIcon className="w-8 h-8 text-orange-500" />
+      <AnimatePresence>
+        {logoutModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 text-center"
+            >
+              {/* Body */}
+              <div className="p-6">
+                <div className="w-16 h-16 mx-auto mb-4 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100">
+                  <ArrowRightOnRectangleIcon className="h-8 w-8 text-[var(--color-accent)]" />
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                  Ready to leave?
+                <h4 className="text-lg font-extrabold text-slate-950 mb-2">
+                  Confirm Logout
                 </h4>
-                <p className="text-gray-600 mb-4">
-                  You will be logged out of your account and redirected to the
-                  login page. Any unsaved changes will be lost.
+                <p className="text-sm text-slate-500 leading-relaxed px-2">
+                  Are you ready to exit your active workspace? You will need to log back in to manage your news feed posts.
                 </p>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
-              <button
-                onClick={() => setLogoutModalOpen(false)}
-                className="order-2 sm:order-1 px-6 py-2.5 text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-              >
-                Stay Logged In
-              </button>
-              <button
-                onClick={() => {
-                  setLogoutModalOpen(false);
-                  handleLogout();
-                }}
-                className="order-1 sm:order-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-medium flex items-center justify-center gap-2"
-              >
-                <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                Yes, Logout
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+              {/* Footer */}
+              <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex flex-col sm:flex-row gap-2.5 sm:justify-end">
+                <button
+                  onClick={() => setLogoutModalOpen(false)}
+                  className="order-2 sm:order-1 px-4 py-2.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Stay in Console
+                </button>
+                <button
+                  onClick={() => {
+                    setLogoutModalOpen(false);
+                    handleLogout();
+                  }}
+                  className="order-1 sm:order-2 px-5 py-2.5 bg-[var(--color-accent)] text-white text-xs font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Yes, Sign Out</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
