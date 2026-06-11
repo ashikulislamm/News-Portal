@@ -1,56 +1,30 @@
 import express from "express";
-import { registerUser , loginUser } from "../controllers/AuthController.js";
-import User from "../models/UserModel.js";
-import {authMiddleware} from "../middlewares/auth.js";
+import { authLimiter } from "../middlewares/rateLimiter.js";
+import { authMiddleware } from "../middlewares/auth.js";
+import {
+  validateRegister,
+  validateLogin,
+  validateProfileUpdate,
+} from "../utils/validator.js";
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+} from "../controllers/authController.js";
 
 const router = express.Router();
 
-// Registration Route
-router.post("/register", registerUser);
-// Login Route
-router.post("/login", loginUser);
-// Get User Info
-router.get("/profile", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id; // authMiddleware should attach user info
-    const user = await User.findById(userId).select("-password"); // exclude password
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-// Update User Info
-router.put("/profile", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
+// Register a new user with validation and rate limiting
+router.post("/register", authLimiter, validateRegister, registerUser);
 
-    // Destructure fields from request body
-    const { fullName, email, phone, country, address, bio } = req.body;
+// Login user with validation and rate limiting
+router.post("/login", authLimiter, validateLogin, loginUser);
 
-    // Find user
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+// Get authenticated user profile
+router.get("/profile", authMiddleware, getUserProfile);
 
-    // Update fields if provided
-    if (fullName) user.fullName = fullName;
-    if (email) user.email = email;
-    if (phone) user.phone = phone;
-    if (country) user.country = country;
-    if (address) user.address = address;
-    if (bio) user.bio = bio;
-
-    await user.save();
-
-    res.json({
-      message: "Profile updated successfully",
-      user,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+// Update user profile with validation
+router.put("/profile", authMiddleware, validateProfileUpdate, updateUserProfile);
 
 export default router;
