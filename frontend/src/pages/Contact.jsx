@@ -1,35 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   UserIcon,
   EnvelopeIcon,
   PhoneIcon,
   ChatBubbleLeftRightIcon,
   LifebuoyIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { motion, AnimatePresence } from "framer-motion";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import Toast from "../components/ui/Toast";
 
 export function ContactPage() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
+    email: "",
     phone: "",
     message: "",
     agree: false,
   });
 
-  const [alert, setAlert] = useState({ message: "", type: "" });
-
-  // Auto dismiss alert toast after 5 seconds
-  useEffect(() => {
-    if (alert.message) {
-      const timer = setTimeout(() => {
-        setAlert({ message: "", type: "" });
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [alert.message]);
+  const [toast, setToast] = useState({ message: "", type: "" });
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,7 +32,7 @@ export function ContactPage() {
     e.preventDefault();
     console.log("contact form:", form);
     
-    setAlert({
+    setToast({
       message: "Your story tip or inquiry has been received. Our news desk will review it shortly.",
       type: "success",
     });
@@ -49,6 +41,7 @@ export function ContactPage() {
     setForm({
       firstName: "",
       lastName: "",
+      email: "",
       phone: "",
       message: "",
       agree: false,
@@ -57,49 +50,16 @@ export function ContactPage() {
 
   return (
     <section className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      {/* Toast Notification Container */}
-      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 max-w-sm w-full">
-        <AnimatePresence>
-          {alert.message && (
-            <motion.div
-              initial={{ opacity: 0, y: -20, x: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
-              className={`flex items-start gap-3 p-4 rounded-xl shadow-xl border text-left ${
-                alert.type === "success"
-                  ? "bg-emerald-50 border-emerald-100 shadow-emerald-500/5"
-                  : "bg-rose-50 border-rose-100 shadow-rose-500/5"
-              }`}
-            >
-              <div className="flex-shrink-0 mt-0.5">
-                {alert.type === "success" ? (
-                  <CheckCircleIcon className="h-5.5 w-5.5 text-emerald-600" />
-                ) : (
-                  <ExclamationCircleIcon className="h-5.5 w-5.5 text-rose-600" />
-                )}
-              </div>
-              <div className="flex-grow space-y-1">
-                <p className="text-sm font-bold text-slate-900">
-                  {alert.type === "success" ? "Success" : "Error Occurred"}
-                </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {alert.message}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAlert({ message: "", type: "" })}
-                className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition cursor-pointer"
-              >
-                <span className="sr-only">Dismiss</span>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Toast Notification Popup */}
+      <AnimatePresence>
+        {toast.message && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ message: "", type: "" })}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main Container Card */}
       <motion.div
@@ -112,7 +72,7 @@ export function ContactPage() {
         <div className="w-full lg:w-3/5 p-8 sm:p-12 flex flex-col justify-center bg-white relative text-left">
           <div className="w-full max-w-md mx-auto space-y-7">
             {/* Title Header */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 select-none">
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
                 Contact Us
               </h1>
@@ -126,125 +86,98 @@ export function ContactPage() {
               {/* First Name & Last Name Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* First Name */}
-                <div className="space-y-1.5">
-                  <label htmlFor="firstName" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                    First Name
-                  </label>
-                  <div className="relative rounded-xl shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                      <UserIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                    </div>
-                    <input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      placeholder="First Name"
-                      required
-                      value={form.firstName}
-                      onChange={onChange}
-                      className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                    />
-                  </div>
-                </div>
+                <Input
+                  label="First Name"
+                  id="firstName"
+                  name="firstName"
+                  placeholder="First Name"
+                  required
+                  value={form.firstName}
+                  onChange={onChange}
+                  icon={UserIcon}
+                />
 
                 {/* Last Name */}
-                <div className="space-y-1.5">
-                  <label htmlFor="lastName" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                    Last Name
-                  </label>
-                  <div className="relative rounded-xl shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                      <UserIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                    </div>
-                    <input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      placeholder="Last Name"
-                      required
-                      value={form.lastName}
-                      onChange={onChange}
-                      className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                    />
-                  </div>
-                </div>
+                <Input
+                  label="Last Name"
+                  id="lastName"
+                  name="lastName"
+                  placeholder="Last Name"
+                  required
+                  value={form.lastName}
+                  onChange={onChange}
+                  icon={UserIcon}
+                />
               </div>
+
+              {/* Email */}
+              <Input
+                label="Email Address"
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                required
+                value={form.email}
+                onChange={onChange}
+                icon={EnvelopeIcon}
+              />
 
               {/* Phone */}
-              <div className="space-y-1.5">
-                <label htmlFor="phone" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Phone Number
-                </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <PhoneIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="+1 (555) 000-0000"
-                    value={form.phone}
-                    onChange={onChange}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Phone Number"
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={form.phone}
+                onChange={onChange}
+                icon={PhoneIcon}
+              />
 
               {/* Message Textarea */}
-              <div className="space-y-1.5">
-                <label htmlFor="message" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Message Details
-                </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-start pl-3.5 pt-3">
-                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={5}
-                    placeholder="Enter your story details or inquiries here..."
-                    required
-                    value={form.message}
-                    onChange={onChange}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200 resize-none"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Message Details"
+                id="message"
+                name="message"
+                textarea
+                rows={5}
+                placeholder="Enter your story details or inquiries here..."
+                required
+                value={form.message}
+                onChange={onChange}
+                icon={ChatBubbleLeftRightIcon}
+              />
 
               {/* T&C Checkbox */}
-              <div className="flex items-start">
+              <div className="flex items-start select-none">
                 <input
                   id="agree"
                   name="agree"
                   type="checkbox"
                   checked={form.agree}
                   onChange={onChange}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--color-accent)] focus:ring-[var(--color-accent)] cursor-pointer"
+                  className="mt-1 h-4.5 w-4.5 rounded border-slate-300 text-[var(--color-accent)] focus:ring-[var(--color-accent)] cursor-pointer"
                 />
-                <label htmlFor="agree" className="ml-2 block text-xs font-semibold text-slate-600 cursor-pointer select-none leading-normal">
+                <label htmlFor="agree" className="ml-2.5 block text-xs font-semibold text-slate-600 cursor-pointer select-none leading-normal">
                   You agree to our <a href="#" className="font-bold underline text-slate-700 hover:text-[var(--color-accent)] transition">Privacy Policy</a>.
                 </label>
               </div>
 
               {/* Submit Button */}
-              <button
+              <Button
                 type="submit"
-                disabled={!form.firstName || !form.message || !form.agree}
-                className="relative w-full overflow-hidden rounded-xl bg-[var(--color-accent)] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-amber-600/15 hover:shadow-amber-600/25 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2 group mt-2"
+                disabled={!form.firstName || !form.email || !form.message || !form.agree}
+                className="w-full py-3.5 mt-2"
               >
-                <span>Send Message Tip</span>
-                <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
+                Send Message Tip
+              </Button>
             </form>
           </div>
         </div>
 
         {/* Right Column: Editorial Contact Details */}
-        <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-slate-900 via-zinc-950 to-amber-950 p-12 flex-col justify-between text-white relative overflow-hidden text-left">
+        <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-slate-900 via-zinc-950 to-amber-950 p-12 flex-col justify-between text-white relative overflow-hidden text-left select-none">
           {/* Decorative Glow Elements */}
           <div className="absolute top-[-20%] right-[-20%] w-72 h-72 bg-[var(--color-accent)] opacity-15 rounded-full blur-3xl" />
           <div className="absolute bottom-[-20%] left-[-20%] w-72 h-72 bg-amber-500 opacity-10 rounded-full blur-3xl" />
@@ -267,7 +200,7 @@ export function ContactPage() {
                   <PhoneIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Newsroom Call</p>
+                  <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider">Newsroom Call</p>
                   <span className="text-sm font-bold text-slate-200">+1 (424) 535 3523</span>
                 </div>
               </li>
@@ -276,7 +209,7 @@ export function ContactPage() {
                   <EnvelopeIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Editorial Inquiries</p>
+                  <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider">Editorial Inquiries</p>
                   <span className="text-sm font-bold text-slate-200">hello@newsportal.com</span>
                 </div>
               </li>
@@ -285,7 +218,7 @@ export function ContactPage() {
                   <LifebuoyIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Technical Helpdesk</p>
+                  <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider">Technical Helpdesk</p>
                   <a href="#" className="text-sm font-bold text-[var(--color-accent)] hover:text-amber-450 underline decoration-2 underline-offset-4 transition">
                     Open Support Ticket
                   </a>

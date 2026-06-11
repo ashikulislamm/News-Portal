@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   UserIcon,
   EnvelopeIcon,
@@ -10,10 +10,12 @@ import {
   LockClosedIcon,
   EyeIcon,
   EyeSlashIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { motion, AnimatePresence } from "framer-motion";
+import { authService } from "../api/services/auth";
+import useAuth from "../hooks/useAuth";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import Toast from "../components/ui/Toast";
 
 function GoogleIcon() {
   return (
@@ -47,20 +49,18 @@ export function RegisterForm() {
     agree: false,
   });
 
+  const { isAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [alert, setAlert] = useState({ message: "", type: "" });
+  const [toast, setToast] = useState({ message: "", type: "" });
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Auto dismiss alert toast after 5 seconds
+  // Redirect if already logged in
   useEffect(() => {
-    if (alert.message) {
-      const timer = setTimeout(() => {
-        setAlert({ message: "", type: "" });
-      }, 5000);
-
-      return () => clearTimeout(timer);
+    if (isAuthenticated) {
+      navigate("/profile");
     }
-  }, [alert.message]);
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -72,17 +72,20 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/register`,
-        form
-      );
+      const data = await authService.register({
+        fullName: form.fullName,
+        email: form.email,
+        address: form.address,
+        password: form.password,
+        phone: form.phone,
+        country: form.country,
+      });
 
-      setAlert({
-        message: response.data.message || "Registration successful! You can now sign in.",
+      setToast({
+        message: data.message || "Registration successful! Redirecting to login...",
         type: "success",
       });
 
-      // Clear the form after successful registration
       setForm({
         fullName: "",
         email: "",
@@ -92,8 +95,12 @@ export function RegisterForm() {
         country: "",
         agree: false,
       });
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (error) {
-      setAlert({
+      setToast({
         message: error.response?.data?.message || "Registration failed. Please check details.",
         type: "error",
       });
@@ -108,55 +115,23 @@ export function RegisterForm() {
     form.address.trim() &&
     form.password.length >= 6 &&
     form.phone.trim() &&
-    form.country.trim();
+    form.country.trim() &&
+    form.agree;
 
   return (
     <section className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      {/* Toast Notification Container */}
-      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 max-w-sm w-full">
-        <AnimatePresence>
-          {alert.message && (
-            <motion.div
-              initial={{ opacity: 0, y: -20, x: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
-              className={`flex items-start gap-3 p-4 rounded-xl shadow-xl border text-left ${
-                alert.type === "success"
-                  ? "bg-emerald-50 border-emerald-100 shadow-emerald-500/5"
-                  : "bg-rose-50 border-rose-100 shadow-rose-500/5"
-              }`}
-            >
-              <div className="flex-shrink-0 mt-0.5">
-                {alert.type === "success" ? (
-                  <CheckCircleIcon className="h-5.5 w-5.5 text-emerald-600" />
-                ) : (
-                  <ExclamationCircleIcon className="h-5.5 w-5.5 text-rose-600" />
-                )}
-              </div>
-              <div className="flex-grow space-y-1">
-                <p className="text-sm font-bold text-slate-900">
-                  {alert.type === "success" ? "Success" : "Error Occurred"}
-                </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {alert.message}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAlert({ message: "", type: "" })}
-                className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition cursor-pointer"
-              >
-                <span className="sr-only">Dismiss</span>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Toast Popup Notification */}
+      <AnimatePresence>
+        {toast.message && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ message: "", type: "" })}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Main card panel with entrance animation */}
+      {/* Main card panel */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -164,7 +139,7 @@ export function RegisterForm() {
         className="flex w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200/50"
       >
         {/* Left Column (Desktop Editorial Content) */}
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-slate-900 via-zinc-950 to-amber-950 p-12 flex-col justify-between text-white relative overflow-hidden text-left">
+        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-slate-900 via-zinc-950 to-amber-950 p-12 flex-col justify-between text-white relative overflow-hidden text-left select-none">
           {/* Decorative Glow Elements */}
           <div className="absolute top-[-20%] right-[-20%] w-72 h-72 bg-[var(--color-accent)] opacity-15 rounded-full blur-3xl" />
           <div className="absolute bottom-[-20%] left-[-20%] w-72 h-72 bg-amber-500 opacity-10 rounded-full blur-3xl" />
@@ -217,17 +192,17 @@ export function RegisterForm() {
         <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-white relative text-left">
           <div className="w-full max-w-md mx-auto space-y-6">
             {/* Title Header */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 select-none">
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
                 Create an Account
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-505">
                 Join us to get the latest stories custom tailored for you.
               </p>
             </div>
 
             {/* Social Connect */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 select-none">
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition duration-200 cursor-pointer shadow-sm"
@@ -245,7 +220,7 @@ export function RegisterForm() {
             </div>
 
             {/* Form Divider */}
-            <div className="relative flex items-center justify-center my-2">
+            <div className="relative flex items-center justify-center my-2 select-none">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200"></div>
               </div>
@@ -257,129 +232,76 @@ export function RegisterForm() {
             {/* Registration Form */}
             <form onSubmit={submit} className="space-y-4">
               {/* Full Name */}
-              <div className="space-y-1">
-                <label htmlFor="fullName" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Full Name
-                </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <UserIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    required
-                    value={form.fullName}
-                    onChange={handleChange}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Full Name"
+                id="fullName"
+                name="fullName"
+                placeholder="John Doe"
+                required
+                value={form.fullName}
+                onChange={handleChange}
+                icon={UserIcon}
+              />
 
               {/* Email */}
-              <div className="space-y-1">
-                <label htmlFor="email" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Email Address
-                </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <EnvelopeIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    required
-                    value={form.email}
-                    onChange={handleChange}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Email Address"
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                required
+                value={form.email}
+                onChange={handleChange}
+                icon={EnvelopeIcon}
+              />
 
               {/* Address */}
-              <div className="space-y-1">
-                <label htmlFor="address" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Street Address
-                </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <MapPinIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    id="address"
-                    name="address"
-                    type="text"
-                    placeholder="123 Editorial St, NY"
-                    required
-                    value={form.address}
-                    onChange={handleChange}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Street Address"
+                id="address"
+                name="address"
+                placeholder="123 Editorial St, NY"
+                required
+                value={form.address}
+                onChange={handleChange}
+                icon={MapPinIcon}
+              />
 
               {/* Country and Phone side-by-side */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Country */}
-                <div className="space-y-1">
-                  <label htmlFor="country" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                    Country
-                  </label>
-                  <div className="relative rounded-xl shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                      <GlobeAltIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                    </div>
-                    <input
-                      id="country"
-                      name="country"
-                      type="text"
-                      placeholder="United States"
-                      required
-                      value={form.country}
-                      onChange={handleChange}
-                      className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                    />
-                  </div>
-                </div>
+                <Input
+                  label="Country"
+                  id="country"
+                  name="country"
+                  placeholder="United States"
+                  required
+                  value={form.country}
+                  onChange={handleChange}
+                  icon={GlobeAltIcon}
+                />
 
                 {/* Phone */}
-                <div className="space-y-1">
-                  <label htmlFor="phone" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                    Phone Number
-                  </label>
-                  <div className="relative rounded-xl shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                      <PhoneIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                    </div>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+1XXXXXXXXXX"
-                      required
-                      pattern="^[+]?[\d\s\(\)\-]{6,}$"
-                      value={form.phone}
-                      onChange={handleChange}
-                      className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
-                    />
-                  </div>
-                </div>
+                <Input
+                  label="Phone Number"
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="+1XXXXXXXXXX"
+                  required
+                  value={form.phone}
+                  onChange={handleChange}
+                  icon={PhoneIcon}
+                />
               </div>
 
               {/* Password */}
-              <div className="space-y-1">
+              <div className="space-y-1.5 relative">
                 <label htmlFor="password" className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                   Password (Min 6 chars)
                 </label>
                 <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <LockClosedIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
                   <input
                     id="password"
                     name="password"
@@ -389,12 +311,12 @@ export function RegisterForm() {
                     minLength={6}
                     value={form.password}
                     onChange={handleChange}
-                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-11 pr-11 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
+                    className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-4 pr-11 text-sm text-slate-900 placeholder-slate-450 focus:border-[var(--color-accent)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition duration-200"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-655 focus:outline-none cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeSlashIcon className="h-5 w-5" />
@@ -406,47 +328,33 @@ export function RegisterForm() {
               </div>
 
               {/* Terms Checkbox */}
-              <div className="flex items-start">
+              <div className="flex items-start select-none">
                 <input
                   id="agree"
                   name="agree"
                   type="checkbox"
                   checked={form.agree}
                   onChange={handleChange}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--color-accent)] focus:ring-[var(--color-accent)] cursor-pointer"
+                  className="mt-1 h-4.5 w-4.5 rounded border-slate-300 text-[var(--color-accent)] focus:ring-[var(--color-accent)] cursor-pointer"
                 />
-                <label htmlFor="agree" className="ml-2 block text-xs font-semibold text-slate-600 cursor-pointer select-none leading-normal">
+                <label htmlFor="agree" className="ml-2.5 block text-xs font-semibold text-slate-605 cursor-pointer select-none leading-normal">
                   I agree to the <a href="#" className="font-bold underline">Terms</a> and <a href="#" className="font-bold underline">Privacy Policy</a>
                 </label>
               </div>
 
               {/* Submit Button */}
-              <button
+              <Button
                 type="submit"
-                disabled={!isValid || loading}
-                className="relative w-full overflow-hidden rounded-xl bg-[var(--color-accent)] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-amber-600/15 hover:shadow-amber-600/25 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2 group"
+                disabled={!isValid}
+                loading={loading}
+                className="w-full py-3"
               >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>Creating account...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Create Account</span>
-                    <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </>
-                )}
-              </button>
+                Create Account
+              </Button>
             </form>
 
             {/* Redirect Footer */}
-            <p className="text-center text-sm text-slate-500 pt-1">
+            <p className="text-center text-sm text-slate-550 pt-1 select-none">
               Already have an account?{" "}
               <Link
                 to="/login"

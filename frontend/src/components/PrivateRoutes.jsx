@@ -1,7 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 // PrivateRoute component for route protection
 export const PrivateRoute = () => {
-  const token = localStorage.getItem("token"); // Check if the token exists in localStorage
-  return token ? <Outlet /> : <Navigate to="/login" />; // Redirect to login if not authenticated
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 };

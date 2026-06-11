@@ -1,21 +1,19 @@
 // Navbar.jsx
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { UserContext } from "../context/UserContext.jsx";
+import useAuth from "../hooks/useAuth";
 import { UserIcon } from "@heroicons/react/24/outline";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, setUser } = useContext(UserContext);
+  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
+    logout();
     setDropdownOpen(false);
     navigate("/login");
   };

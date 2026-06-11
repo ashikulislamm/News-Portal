@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -29,6 +30,7 @@ app.use(express.static(buildPath));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 5000;
