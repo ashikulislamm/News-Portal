@@ -72,7 +72,7 @@ export function TrendingWidget({ posts = [] }) {
         {posts.map((post, index) => (
           <div
             key={post._id}
-            onClick={() => navigate(`/news/${post._id}`)}
+            onClick={() => navigate(`/news/${post.slug || post._id}`)}
             className="p-3.5 hover:bg-slate-50 cursor-pointer flex gap-3 transition duration-150"
           >
             <span className="text-lg font-serif font-black text-slate-200 w-5 text-right shrink-0 select-none">
@@ -142,7 +142,7 @@ export function EditorsPicksWidget({ posts = [] }) {
           return (
             <div
               key={post._id}
-              onClick={() => navigate(`/news/${post._id}`)}
+              onClick={() => navigate(`/news/${post.slug || post._id}`)}
               className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition duration-150"
             >
               <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-100">

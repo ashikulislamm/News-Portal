@@ -25,7 +25,7 @@ export function NewsDetails() {
     addComment,
     updateComment,
     deleteComment,
-  } = useComments(id);
+  } = useComments(post?._id);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -48,7 +48,7 @@ export function NewsDetails() {
     setLikeLoading(true);
 
     try {
-      const data = await newsService.toggleLikeNews(id);
+      const data = await newsService.toggleLikeNews(post?._id);
       setPost((prev) => ({
         ...prev,
         likes: data.likes,

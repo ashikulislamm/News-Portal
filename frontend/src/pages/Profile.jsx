@@ -298,6 +298,7 @@ export function UserDashboard() {
               {activeSection === "userInfo" && (
                 <ProfileInfo
                   user={user}
+                  posts={posts}
                   postsCount={posts.length}
                   postsLoading={postsLoading}
                   onNavigateToPosts={() => setActiveSection("postedNews")}

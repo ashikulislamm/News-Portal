@@ -39,7 +39,7 @@ export default function NewsCard({
   if (!post) return null;
 
   const handleCardClick = () => {
-    navigate(`/news/${post._id}`);
+    navigate(`/news/${post.slug || post._id}`);
   };
 
   const handleBookmark = (e) => {

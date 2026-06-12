@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   EnvelopeIcon,
   PhoneIcon,
@@ -6,6 +7,7 @@ import {
   MapPinIcon,
   FolderIcon,
 } from "@heroicons/react/24/outline";
+import { formatDate } from "../../../utils/formatters";
 
 // Copy to Clipboard Helper Button
 const CopyButton = ({ text }) => {
@@ -57,8 +59,10 @@ const CopyButton = ({ text }) => {
   );
 };
 
-export default function ProfileInfo({ user, postsCount, postsLoading, onNavigateToPosts }) {
+export default function ProfileInfo({ user, posts = [], postsCount, postsLoading, onNavigateToPosts }) {
   const defaultAvatar = "https://i.pravatar.cc/150?img=1";
+  const navigate = useNavigate();
+  const latestPosts = (posts || []).slice(0, 5);
 
   return (
     <div className="space-y-6 text-left">
@@ -123,13 +127,79 @@ export default function ProfileInfo({ user, postsCount, postsLoading, onNavigate
               </button>
             </div>
 
-            <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-slate-100/50">
-              <p className="text-xs text-slate-450 font-bold">
-                {postsLoading
-                  ? "Loading publications count..."
-                  : `You have successfully published ${postsCount} news articles online.`}
-              </p>
-            </div>
+            {postsLoading ? (
+              <div className="space-y-3 animate-pulse">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="w-12 h-12 bg-slate-200 rounded-lg shrink-0" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-4 bg-slate-200 rounded w-3/4" />
+                      <div className="h-3 bg-slate-200 rounded w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : latestPosts.length === 0 ? (
+              <div className="text-center py-8 bg-slate-50/50 rounded-2xl border border-slate-100/50 select-none">
+                <FolderIcon className="h-8 w-8 text-slate-350 mx-auto mb-2" />
+                <p className="text-xs text-slate-450 font-bold mb-3">
+                  You haven't published any news articles yet.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {latestPosts.map((post) => {
+                  const imageUrl = post.imageUrl
+                    ? `${import.meta.env.VITE_API_BASE_URL}${post.imageUrl}`
+                    : null;
+                  return (
+                    <div
+                      key={post._id}
+                      onClick={() => navigate(`/news/${post.slug || post._id}`)}
+                      className="group flex gap-4 p-3.5 rounded-2xl bg-slate-50/50 hover:bg-white border border-slate-100/70 hover:border-amber-500/20 hover:shadow-md transition-all duration-300 cursor-pointer text-left"
+                    >
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-150 flex items-center justify-center">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-300"
+                          />
+                        ) : (
+                          <span className="text-2xl select-none">📰</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        <div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-[var(--color-accent)]">
+                              {post.category}
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">
+                              {formatDate(post.createdAt, {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
+                          <h4 className="text-xs sm:text-sm font-black text-slate-800 group-hover:text-[var(--color-accent)] transition-colors line-clamp-1 mt-0.5 font-serif leading-snug">
+                            {post.title}
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-slate-450 font-bold mt-1.5">
+                          <span className="flex items-center gap-1.5">
+                            👁️ {post.viewCount || 0} views
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            ❤️ {post.likes?.length || 0} likes
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

@@ -20,7 +20,7 @@ export default function NewsTicker({ posts = [] }) {
             {tickerItems.map((post, idx) => (
               <button
                 key={idx}
-                onClick={() => navigate(`/news/${post._id}`)}
+                onClick={() => navigate(`/news/${post.slug || post._id}`)}
                 className="hover:text-[#b91c1c] cursor-pointer transition-colors duration-150 text-left font-medium max-w-md truncate focus-indicator"
               >
                 ✦ {post.title}

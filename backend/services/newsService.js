@@ -79,7 +79,7 @@ export const createNews = async (newsData, userId, files = {}) => {
   const images = files.gallery ? files.gallery.map((file) => `/uploads/${file.filename}`) : [];
 
   // Auto-generate unique slug
-  const finalSlug = slug ? await generateUniqueSlug(slug) : await generateUniqueSlug(title);
+  const finalSlug = (slug && slug !== "undefined") ? await generateUniqueSlug(slug) : await generateUniqueSlug(title);
   
   const parsedTags = parseArray(tags);
   const parsedKeywords = parseArray(keywords);

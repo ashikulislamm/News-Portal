@@ -158,7 +158,7 @@ export function News() {
   // Web Share or Copy Clipboard
   const shareArticle = (post, e) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/news/${post._id}`;
+    const shareUrl = `${window.location.origin}/news/${post.slug || post._id}`;
     if (navigator.share) {
       navigator
         .share({
