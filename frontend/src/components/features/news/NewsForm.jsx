@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from "react";
 import Input from "../../ui/Input";
 import Button from "../../ui/Button";
+import RichTextEditor from "./editor/RichTextEditor";
+
+const formatContentForEditor = (html) => {
+  if (!html) return "";
+  return html.replaceAll('/uploads/', `${import.meta.env.VITE_API_BASE_URL}/uploads/`);
+};
+
+const formatContentForSubmit = (html) => {
+  if (!html) return "";
+  return html.replaceAll(import.meta.env.VITE_API_BASE_URL, "");
+};
+
+const isContentEmpty = (html) => {
+  if (!html) return true;
+  const text = html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, "").trim();
+  return text === "";
+};
 
 const CATEGORIES = [
   "Politics",
@@ -51,7 +68,7 @@ export default function NewsForm({
       setForm({
         title: initialValues.title || "",
         description: initialValues.description || "",
-        content: initialValues.content || "",
+        content: formatContentForEditor(initialValues.content || ""),
         category: initialValues.category || "Politics",
         tags: Array.isArray(initialValues.tags) ? initialValues.tags.join(", ") : initialValues.tags || "",
         keywords: Array.isArray(initialValues.keywords) ? initialValues.keywords.join(", ") : initialValues.keywords || "",
@@ -70,6 +87,48 @@ export default function NewsForm({
       }
     }
   }, [initialValues]);
+
+  // Draft banner and state
+  const [hasDraft, setHasDraft] = useState(false);
+
+  useEffect(() => {
+    if (!initialValues) {
+      const savedDraft = localStorage.getItem("news_portal_draft");
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed.title || parsed.content || parsed.description) {
+            setHasDraft(true);
+          }
+        } catch (e) {}
+      }
+    }
+  }, [initialValues]);
+
+  // Save draft auto-saves when creating a post
+  useEffect(() => {
+    if (!initialValues) {
+      if (form.title || form.content || form.description) {
+        localStorage.setItem("news_portal_draft", JSON.stringify(form));
+      }
+    }
+  }, [form, initialValues]);
+
+  const handleRestoreDraft = () => {
+    const savedDraft = localStorage.getItem("news_portal_draft");
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        setForm(parsed);
+        setHasDraft(false);
+      } catch (e) {}
+    }
+  };
+
+  const handleClearDraft = () => {
+    localStorage.removeItem("news_portal_draft");
+    setHasDraft(false);
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -97,10 +156,19 @@ export default function NewsForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    if (isContentEmpty(form.content)) {
+      alert("Article body content cannot be empty.");
+      return;
+    }
+
     // Construct FormData to handle multipart/form-data
     const formData = new FormData();
     Object.keys(form).forEach((key) => {
-      formData.append(key, form[key]);
+      if (key === "content") {
+        formData.append(key, formatContentForSubmit(form.content));
+      } else {
+        formData.append(key, form[key]);
+      }
     });
 
     if (image) formData.append("image", image);
@@ -111,6 +179,9 @@ export default function NewsForm({
       }
     }
 
+    // Clear draft on successful submit
+    localStorage.removeItem("news_portal_draft");
+
     if (onSubmit) {
       onSubmit(formData);
     }
@@ -118,6 +189,29 @@ export default function NewsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-slate-800">
+      {hasDraft && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 mb-4 text-left">
+          <div className="text-xs text-slate-700">
+            💡 You have an auto-saved draft of a news article. Would you like to restore it?
+          </div>
+          <div className="flex gap-2 text-xs font-black uppercase">
+            <button
+              type="button"
+              onClick={handleRestoreDraft}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-xl transition cursor-pointer"
+            >
+              Restore Draft
+            </button>
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-650 px-4 py-2 rounded-xl transition cursor-pointer"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Title */}
         <Input
@@ -146,18 +240,16 @@ export default function NewsForm({
         />
 
         {/* Content */}
-        <Input
-          label="Full Article Body"
-          id="content"
-          name="content"
-          textarea
-          rows={8}
-          required
-          value={form.content}
-          onChange={handleChange}
-          placeholder="Write full article here..."
-          className="md:col-span-2"
-        />
+        <div className="space-y-1.5 text-left md:col-span-2">
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+            Full Article Body *
+          </label>
+          <RichTextEditor
+            value={form.content}
+            onChange={(htmlContent) => setForm(prev => ({ ...prev, content: htmlContent }))}
+            placeholder="Write the full news article here..."
+          />
+        </div>
 
         {/* Category Selector */}
         <div className="space-y-1.5 text-left">

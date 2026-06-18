@@ -62,3 +62,21 @@ export const handleUploadFields = (req, res, next) => {
     next();
   });
 };
+
+// Configure single image upload for the editor
+const uploadSingleImage = upload.single("image");
+
+export const handleSingleUpload = (req, res, next) => {
+  uploadSingleImage(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return next(new BadRequestError(`File is too large. Max limit is ${config.maxFileSize / (1024 * 1024)}MB.`));
+      }
+      return next(new BadRequestError(`File upload error: ${err.message}`));
+    } else if (err) {
+      return next(err);
+    }
+    next();
+  });
+};
+

@@ -1,6 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.js";
-import { handleUploadFields } from "../middlewares/upload.js";
+import { handleUploadFields, handleSingleUpload } from "../middlewares/upload.js";
 import { validateNewsCreate, validateNewsUpdate } from "../utils/validator.js";
 import {
   createNewsPost,
@@ -9,6 +9,7 @@ import {
   updateNewsPost,
   deleteNewsPost,
   toggleNewsLike,
+  uploadImageController,
 } from "../controllers/newsController.js";
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.get("/:idOrSlug", getNewsPost);
 // Create a new news article (authenticated, multi-file upload, validation)
 router.post("/", authMiddleware, handleUploadFields, validateNewsCreate, createNewsPost);
 
+// Upload a single image for editor (authenticated)
+router.post("/upload-image", authMiddleware, handleSingleUpload, uploadImageController);
+
 // Update an existing news article (authenticated, owner checks, multi-file upload, validation)
 router.put("/:id", authMiddleware, handleUploadFields, validateNewsUpdate, updateNewsPost);
 
@@ -32,3 +36,4 @@ router.delete("/:id", authMiddleware, deleteNewsPost);
 router.post("/:id/like", authMiddleware, toggleNewsLike);
 
 export default router;
+

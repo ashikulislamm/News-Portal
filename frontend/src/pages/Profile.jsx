@@ -212,7 +212,7 @@ export function UserDashboard() {
   ];
 
   return (
-    <section className="min-h-screen bg-slate-50/50 py-10">
+    <section className="min-h-screen py-10">
       {/* Toast Alert popup container */}
       <AnimatePresence>
         {toast.message && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 import { AnimatePresence } from "framer-motion";
 import { newsService } from "../api/services/news";
 import useAuth from "../hooks/useAuth";
@@ -10,6 +11,18 @@ import Toast from "../components/ui/Toast";
 import { NewsDetailsSkeleton } from "../components/ui/LoadingSkeleton";
 import { getYoutubeEmbedUrl } from "../utils/youtube";
 import { formatDate } from "../utils/formatters";
+
+const getSafeHtmlContent = (content) => {
+  if (!content) return "";
+  const isHtml = /<[a-z][\s\S]*>/i.test(content);
+  if (!isHtml) {
+    return content
+      .split("\n\n")
+      .map((p) => `<p>${p.replaceAll("\n", "<br />")}</p>`)
+      .join("");
+  }
+  return content;
+};
 
 export function NewsDetails() {
   const { id } = useParams();
@@ -183,9 +196,15 @@ export function NewsDetails() {
       )}
 
       {/* Main Content */}
-      <div className="text-lg leading-relaxed text-slate-805 mb-8 whitespace-pre-line text-justify">
-        {post.content}
-      </div>
+      <div 
+        className="article-content text-lg leading-relaxed text-slate-805 mb-8 text-justify"
+        dangerouslySetInnerHTML={{ 
+          __html: DOMPurify.sanitize(getSafeHtmlContent(post.content), { 
+            ALLOW_DATA_ATTR: true,
+            ADD_ATTR: ['target', 'rel']
+          }) 
+        }}
+      />
 
       {/* Video Embed */}
       {youtubeEmbedUrl && (

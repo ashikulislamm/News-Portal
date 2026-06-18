@@ -6,3 +6,362 @@
   --color-background: #faf9f6;
   --color-text: #0a0a0a;
 }
+
+/* ==========================================================================
+   Editorial Typography for Article Content (.article-content) & Tiptap Editor
+   ========================================================================== */
+.article-content,
+.ProseMirror {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  color: #1e293b;
+  line-height: 1.85;
+  font-size: 1.125rem;
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+/* Headings */
+.article-content h1,
+.ProseMirror h1 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #0f172a;
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+.article-content h2,
+.ProseMirror h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0f172a;
+  margin-top: 2rem;
+  margin-bottom: 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 0.5rem;
+}
+
+.article-content h3,
+.ProseMirror h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1e293b;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-content h4,
+.ProseMirror h4 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #475569;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Paragraphs & Text */
+.article-content p,
+.ProseMirror p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.article-content a,
+.ProseMirror a {
+  color: var(--color-accent, #d97706);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.article-content a:hover,
+.ProseMirror a:hover {
+  color: var(--color-secondary, #b91c1c);
+}
+
+/* Lists styling */
+.article-content ul,
+.ProseMirror ul {
+  list-style-type: disc;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-left: 1.75rem;
+}
+
+.article-content ol,
+.ProseMirror ol {
+  list-style-type: decimal;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-left: 1.75rem;
+}
+
+.article-content li,
+.ProseMirror li {
+  margin-top: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+/* Blockquotes */
+.article-content blockquote:not([data-type="pull-quote"]),
+.ProseMirror blockquote:not([data-type="pull-quote"]) {
+  font-size: 1.25rem;
+  font-style: italic;
+  border-left: 4px solid var(--color-accent, #d97706);
+  padding-left: 1.5rem;
+  margin: 1.75rem 0;
+  color: #475569;
+}
+
+/* Horizontal Rule */
+.article-content hr,
+.ProseMirror hr {
+  border: 0;
+  border-top: 2px solid #e2e8f0;
+  margin: 2.25rem 0;
+}
+
+/* Code Blocks & Inline Code */
+.article-content pre,
+.ProseMirror pre {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  margin: 1.75rem 0;
+}
+
+.article-content code,
+.ProseMirror code {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.375rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.article-content pre code,
+.ProseMirror pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  font-weight: normal;
+}
+
+/* Task lists */
+.article-content ul[data-type="taskList"],
+.ProseMirror ul[data-type="taskList"] {
+  list-style-type: none;
+  padding-left: 0.25rem;
+}
+
+.article-content ul[data-type="taskList"] li,
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.article-content ul[data-type="taskList"] input[type="checkbox"],
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  margin-top: 0.35rem;
+  accent-color: var(--color-accent, #d97706);
+  cursor: pointer;
+}
+
+/* Images & Figures styling */
+.article-content figure,
+.ProseMirror figure {
+  margin: 2rem auto;
+  display: block;
+}
+
+.article-content figcaption,
+.ProseMirror figcaption {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Custom Blocks: Callout Box, Breaking News, Quick Facts, Key Takeaways */
+.custom-breaking-news {
+  border: 2px solid var(--color-secondary, #b91c1c);
+  border-radius: 0.75rem;
+  margin: 1.75rem 0;
+  overflow: hidden;
+  background-color: rgba(185, 28, 28, 0.03);
+  font-family: "Montserrat", sans-serif;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.custom-breaking-news-header {
+  background-color: var(--color-secondary, #b91c1c);
+  color: white;
+  font-weight: 800;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.custom-breaking-news-content {
+  padding: 1rem 1rem 0.1rem 1rem;
+}
+
+.custom-quick-facts {
+  border: 1px solid var(--color-accent, #d97706);
+  border-radius: 0.75rem;
+  margin: 1.75rem 0;
+  overflow: hidden;
+  background-color: rgba(217, 119, 6, 0.03);
+  font-family: "Montserrat", sans-serif;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.custom-quick-facts-header {
+  background-color: var(--color-accent, #d97706);
+  color: #0f172a;
+  font-weight: 800;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.custom-quick-facts-content {
+  padding: 1rem 1rem 0.1rem 1rem;
+}
+
+.custom-key-takeaways {
+  border: 1px solid #4f46e5;
+  border-radius: 0.75rem;
+  margin: 1.75rem 0;
+  overflow: hidden;
+  background-color: rgba(79, 70, 229, 0.03);
+  font-family: "Montserrat", sans-serif;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.custom-key-takeaways-header {
+  background-color: #4f46e5;
+  color: white;
+  font-weight: 800;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.custom-key-takeaways-content {
+  padding: 1rem 1rem 0.1rem 1rem;
+}
+
+.custom-pull-quote {
+  border-top: 1px solid rgba(217, 119, 6, 0.3);
+  border-bottom: 1px solid rgba(217, 119, 6, 0.3);
+  padding: 1.75rem 0;
+  margin: 2rem 0;
+  text-align: center;
+}
+.custom-pull-quote p {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-size: 1.6rem !important;
+  line-height: 1.55 !important;
+  color: #0f172a !important;
+  font-style: italic !important;
+  margin: 0 !important;
+}
+
+.custom-related-story {
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  font-family: "Montserrat", sans-serif;
+}
+.custom-related-story-link {
+  font-weight: 700;
+  color: #0f172a !important;
+  text-decoration: none !important;
+  font-size: 0.875rem;
+  transition: color 0.15s;
+}
+.custom-related-story-link:hover {
+  color: var(--color-accent, #d97706) !important;
+}
+
+.custom-callout-box {
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-radius: 0 0.75rem 0.75rem 0;
+  padding: 1.125rem 1.25rem;
+  margin: 1.5rem 0;
+  background-color: #f8fafc;
+  display: flex;
+  gap: 0.875rem;
+  font-family: "Montserrat", sans-serif;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.custom-callout-box-info {
+  border-left-color: #4f46e5;
+  background-color: rgba(79, 70, 229, 0.01);
+}
+.custom-callout-box-warning {
+  border-left-color: var(--color-accent, #d97706);
+  background-color: rgba(217, 119, 6, 0.01);
+}
+.custom-callout-box-icon {
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+.custom-callout-box-content {
+  flex-grow: 1;
+  font-size: 0.9375rem;
+}
+.custom-callout-box-content p {
+  margin: 0 !important;
+}
+
+/* Align classes for images */
+.custom-image-figure.mr-auto {
+  margin-right: auto;
+  margin-left: 0;
+}
+.custom-image-figure.ml-auto {
+  margin-left: auto;
+  margin-right: 0;
+}
+.custom-image-figure.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ProseMirror focus states & styling */
+.ProseMirror:focus {
+  outline: none;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #94a3b8;
+  pointer-events: none;
+  height: 0;
+}
+

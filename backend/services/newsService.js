@@ -7,8 +7,9 @@ import { BadRequestError, NotFoundError, ForbiddenError } from "../utils/appErro
 // Helper: Calculate reading time in minutes (approx. 200 words per minute)
 const calculateReadingTime = (content) => {
   if (!content) return 0;
-  const words = content.trim().split(/\s+/).length;
-  return Math.ceil(words / 200);
+  const textOnly = content.replace(/<[^>]*>/g, " ");
+  const words = textOnly.trim().split(/\s+/).filter((w) => w.length > 0).length;
+  return Math.ceil(words / 200) || 1;
 };
 
 // Helper: Parse array fields if they are sent as strings

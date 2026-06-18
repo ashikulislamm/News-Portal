@@ -1,5 +1,6 @@
 import * as newsService from "../services/newsService.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { BadRequestError } from "../utils/appError.js";
 
 /**
  * Controller to handle news articles
@@ -42,3 +43,15 @@ export const toggleNewsLike = asyncHandler(async (req, res) => {
     likes: result.likes,
   });
 });
+
+export const uploadImageController = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new BadRequestError("No file uploaded");
+  }
+  const imageUrl = `/uploads/${req.file.filename}`;
+  res.status(200).json({
+    message: "Image uploaded successfully",
+    url: imageUrl,
+  });
+});
+

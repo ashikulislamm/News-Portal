@@ -38,4 +38,15 @@ export const newsService = {
     const response = await apiClient.post(`/api/news/${id}/like`);
     return response.data;
   },
+
+  uploadImage: async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await apiClient.post("/api/news/upload-image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
 };
