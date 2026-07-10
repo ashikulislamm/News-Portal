@@ -1,0 +1,13 @@
+# Dependencies
+/node_modules
+/dist
+
+# Environment variables
+.env
+.env.local
+
+# Playwright
+playwright-report
+playwright-video
+test-results
+*.trace.zip

@@ -1,0 +1,16 @@
+{
+  "name": "news-portal-e2e-automation",
+  "version": "1.0.0",
+  "description": "Playwright automated testing suite for News Portal application",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}
